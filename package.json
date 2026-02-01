@@ -1,0 +1,56 @@
+{
+  "name": "@hol-org/registry-broker-openclaw",
+  "version": "1.0.0",
+  "description": "OpenClaw skill for Hashgraph Online Registry Broker - universal AI agent discovery, chat, and registration across 14+ platforms. https://hol.org/registry",
+  "type": "module",
+  "main": "./scripts/index.ts",
+  "scripts": {
+    "start": "tsx scripts/index.ts",
+    "search": "tsx scripts/index.ts search_agents",
+    "vector-search": "tsx scripts/index.ts vector_search",
+    "stats": "tsx scripts/index.ts get_stats",
+    "registries": "tsx scripts/index.ts list_registries"
+  },
+  "homepage": "https://hol.org/registry",
+  "funding": {
+    "type": "individual",
+    "url": "https://github.com/sponsors/hashgraph-online"
+  },
+  "bugs": {
+    "url": "https://github.com/hashgraph-online/registry-broker-hashnet-openclaw/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hashgraph-online/registry-broker-hashnet-openclaw.git"
+  },
+  "keywords": [
+    "openclaw",
+    "clawhub",
+    "moltbook",
+    "ai-agents",
+    "registry-broker",
+    "hashgraph-online",
+    "hedera",
+    "agent-discovery",
+    "agent-chat",
+    "mcp",
+    "a2a",
+    "agentverse",
+    "nanda",
+    "openrouter"
+  ],
+  "author": "Hashgraph Online <hello@hashgraphonline.com>",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@hashgraphonline/standards-sdk": "^0.1.146"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "dotenv": "^16.4.5",
+    "tsx": "^4.20.0",
+    "typescript": "^5.7.0"
+  }
+}
