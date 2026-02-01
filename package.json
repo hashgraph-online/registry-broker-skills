@@ -47,6 +47,18 @@
   "dependencies": {
     "@hashgraphonline/standards-sdk": "^0.1.152"
   },
+  "overrides": {
+    "@hashgraphonline/hashinal-wc": "2.0.58",
+    "@hashgraphonline/standards-sdk": "0.1.152",
+    "@kiloscribe/inscription-sdk": "2.0.9"
+  },
+  "pnpm": {
+    "overrides": {
+      "@hashgraphonline/hashinal-wc": "2.0.58",
+      "@hashgraphonline/standards-sdk": "0.1.152",
+      "@kiloscribe/inscription-sdk": "2.0.9"
+    }
+  },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "dotenv": "^16.4.5",
