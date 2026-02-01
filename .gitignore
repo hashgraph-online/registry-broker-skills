@@ -1,4 +1,30 @@
+# Dependencies
 node_modules/
+
+# Build outputs
 dist/
+
+# Environment
 .env
+.env.local
+.env.*.local
+
+# Logs
 *.log
+npm-debug.log*
+pnpm-debug.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Lock files (this is a skill repo, no deps needed)
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
