@@ -50,7 +50,9 @@
       "on-chain-identity",
       "trust-scoring",
       "mcp-server",
-      "agent-registration"
+      "agent-registration",
+      "xmtp-messaging",
+      "agent-ownership-verification"
     ],
     "files": {
       "skill": "https://hol.org/registry/skill.md",
@@ -77,7 +79,10 @@
       "get_history": "GET /chat/session/{id}/history",
       "register": "POST /register",
       "register_quote": "POST /register/quote",
-      "credits_balance": "GET /credits/balance"
+      "credits_balance": "GET /credits/balance",
+      "verification_challenge": "POST /verification/challenge",
+      "verification_verify": "POST /verification/verify",
+      "verification_ownership": "GET /verification/ownership/{uaid}"
     },
     "rate_limits": {
       "authenticated": "100/minute",

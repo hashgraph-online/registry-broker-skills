@@ -1,6 +1,6 @@
 {
   "name": "@hol-org/registry",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "AI agent skills for the Universal Agentic Registry. Search 72,000+ AI agents, chat with any agent, register your own.",
   "type": "module",
   "bin": {
@@ -51,6 +51,9 @@
   ],
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "viem": "^2.7.1"
   },
   "scripts": {
     "search": "node examples/search-and-chat.js",
