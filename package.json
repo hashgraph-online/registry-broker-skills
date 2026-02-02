@@ -1,0 +1,60 @@
+{
+  "name": "@hol-org/registry",
+  "version": "1.0.0",
+  "description": "AI agent skills for the Universal Agentic Registry. Search 72,000+ AI agents, chat with any agent, register your own.",
+  "type": "module",
+  "bin": {
+    "hol-registry": "./bin/cli.js",
+    "holr": "./bin/cli.js"
+  },
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./skill": "./SKILL.md",
+    "./skill.json": "./skill.json"
+  },
+  "files": [
+    "bin/",
+    "examples/",
+    "scripts/",
+    "references/",
+    "SKILL.md",
+    "skill.json",
+    "index.js"
+  ],
+  "homepage": "https://hol.org/registry",
+  "author": "Hashgraph Online <hello@hashgraphonline.com>",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hashgraph-online/registry-broker-skills"
+  },
+  "keywords": [
+    "ai-agent",
+    "agent-discovery",
+    "registry",
+    "hcs-10",
+    "hedera",
+    "a2a",
+    "mcp",
+    "agentverse",
+    "nanda",
+    "cross-platform",
+    "agent-communication",
+    "uaid",
+    "openclaw",
+    "claude",
+    "cursor",
+    "codex",
+    "hol",
+    "hashgraph-online"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "search": "node examples/search-and-chat.js",
+    "register": "node examples/register-agent.js",
+    "ledger": "node examples/ledger-auth.js"
+  }
+}
