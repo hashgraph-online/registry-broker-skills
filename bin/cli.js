@@ -50,7 +50,9 @@ COMMANDS:
   claim <uaid>              Verify your Moltbook agent manually (2-step process)
   import-key                Import an existing EVM private key for your identity
   whoami                    Show your identity and claimed agents
+  refresh-key               Regenerate your API key (if expired or invalid)
   resolve <uaid>            Resolve UAID to agent details
+  check <uaid>              Check agent availability and status
   stats                     Get platform statistics
   balance                   Check credit balance (requires API key)
   skill                     Print the skill.md URL
@@ -61,6 +63,7 @@ OPTIONS:
   --api-key <key>           Moltbook API key (claim only; used only for Moltbook API, never sent to broker)
   --api-key-stdin           Read Moltbook API key from stdin (claim only; used only for Moltbook API, never sent to broker)
   --as <senderUaid>         Send as a verified agent UAID (advanced; requires ownership verification)
+  --json                    Output raw JSON (for programmatic use)
 
 ENVIRONMENT:
   REGISTRY_BROKER_API_KEY   Your API key (required for chat, balance)
@@ -105,6 +108,37 @@ function loadIdentity() {
 function saveIdentity(identity) {
   ensureKeyDir();
   fs.writeFileSync(KEY_FILE, JSON.stringify(identity, null, 2), { mode: 0o600 });
+}
+
+function formatChatResponse(response, jsonMode = false) {
+  if (jsonMode) {
+    return JSON.stringify(response, null, 2);
+  }
+
+  if (response.error) {
+    return `Error: ${response.error}`;
+  }
+
+  const lines = [];
+  
+  if (response.message) {
+    lines.push(`Agent: ${response.message}`);
+  }
+  
+  if (response.metadata?.provider) {
+    lines.push(`  Transport: ${response.metadata.provider}`);
+  }
+  
+  if (response.metadata?.conversationId) {
+    lines.push(`  Conversation: ${response.metadata.conversationId.slice(0, 12)}...`);
+  }
+
+  if (response.historyTtlSeconds) {
+    const mins = Math.floor(response.historyTtlSeconds / 60);
+    lines.push(`  History expires in: ${mins} minutes`);
+  }
+
+  return lines.join('\n');
 }
 
 function getOrCreateIdentity() {
@@ -761,6 +795,32 @@ async function whoami() {
   console.log();
 }
 
+async function refreshKey() {
+  const identity = loadIdentity();
+  
+  if (!identity) {
+    console.log('\nNo identity found.');
+    console.log('Run "claim <uaid>" to create an identity first.\n');
+    return;
+  }
+
+  console.log('\nRefreshing API key...');
+  
+  // Clear existing key to force re-auth
+  delete identity.apiKey;
+  delete identity.apiKeyBaseUrl;
+  saveIdentity(identity);
+  
+  try {
+    const newKey = await authenticateWithLedger(identity);
+    console.log('API key refreshed successfully.');
+    console.log(`  New key: ${newKey.slice(0, 12)}...${newKey.slice(-8)}\n`);
+  } catch (error) {
+    console.error(`Failed to refresh key: ${error.message}`);
+    process.exit(1);
+  }
+}
+
 // ============================================================================
 // Original Functions
 // ============================================================================
@@ -922,12 +982,14 @@ async function chat(uaid, message, options = null) {
         }
       }
     }
-    console.log('Response:', JSON.stringify(response, null, 2));
+    console.log(formatChatResponse(response, options?.json));
 
     // Update last used time
     saveSessionForUaid(uaid, sessionId, null, sessionTransport);
 
-    console.log('\nSession kept alive for history. Use `history` command to view past messages.');
+    if (!options?.json) {
+      console.log('\nSession kept alive for history. Use `history` command to view past messages.');
+    }
   } else {
     console.log('Session ready. Use the sessionId to send messages.');
     console.log(`SessionId: ${sessionId}`);
@@ -952,19 +1014,83 @@ async function stats() {
 }
 
 async function balance() {
-  if (!API_KEY) {
-    console.error('Error: REGISTRY_BROKER_API_KEY environment variable required');
+  const identity = loadIdentity();
+  const apiKey = API_KEY || identity?.apiKey;
+
+  if (!apiKey) {
+    console.error('Error: No API key found.');
+    console.error('Set REGISTRY_BROKER_API_KEY or authenticate via `claim` command.');
     console.error('Get your API key at: https://hol.org/registry/dashboard');
     process.exit(1);
   }
 
-  const response = await fetch(`${BASE_URL}/credits/balance`, {
-    headers: { 'x-api-key': API_KEY },
-  });
+  const headers = apiKey.startsWith('rbk_')
+    ? { 'x-ledger-api-key': apiKey }
+    : { 'x-api-key': apiKey };
+
+  const response = await fetch(`${BASE_URL}/credits/balance`, { headers });
   const data = await response.json();
 
   console.log('\nCredit Balance:\n');
-  console.log(JSON.stringify(data, null, 2));
+  if (data.error) {
+    console.error(`Error: ${data.error}`);
+  } else {
+    console.log(`  Account: ${data.accountId || 'N/A'}`);
+    console.log(`  Balance: ${data.balance ?? 0} credits`);
+  }
+}
+
+async function check(uaid) {
+  const url = `${BASE_URL}/resolve/${encodeURIComponent(uaid)}`;
+  const response = await fetch(url);
+  const data = await response.json();
+
+  if (data.error) {
+    console.error(`\nError: ${data.error}\n`);
+    process.exit(1);
+  }
+
+  const agent = data.agent;
+  if (!agent) {
+    console.error('\nAgent not found.\n');
+    process.exit(1);
+  }
+
+  console.log(`\n${agent.name || agent.id}`);
+  console.log('='.repeat(40));
+  
+  // Availability
+  const status = agent.availabilityStatus || 'unknown';
+  const statusIcon = status === 'online' ? '[OK]' : status === 'stale' ? '[?]' : '[X]';
+  console.log(`  Status: ${statusIcon} ${status}`);
+  
+  if (agent.availabilityScore !== undefined) {
+    console.log(`  Uptime: ${(agent.availabilityScore * 100).toFixed(1)}%`);
+  }
+  
+  if (agent.availabilityLatencyMs) {
+    console.log(`  Latency: ${agent.availabilityLatencyMs}ms`);
+  }
+  
+  // Trust score
+  if (agent.trustScore !== undefined) {
+    console.log(`  Trust Score: ${agent.trustScore.toFixed(1)}/100`);
+  }
+  
+  // Communication
+  console.log(`  Can Chat: ${agent.communicationSupported ? 'Yes' : 'No'}`);
+  
+  // Registry
+  console.log(`  Registry: ${agent.registry}`);
+  
+  // Last seen
+  if (agent.lastSeen) {
+    const lastSeen = new Date(agent.lastSeen);
+    const ago = Math.floor((Date.now() - lastSeen.getTime()) / 1000 / 60);
+    console.log(`  Last Seen: ${ago < 60 ? ago + ' minutes ago' : Math.floor(ago / 60) + ' hours ago'}`);
+  }
+  
+  console.log();
 }
 
 function skill(json = false) {
@@ -1171,14 +1297,19 @@ async function main() {
       case 'chat': {
         const parsed = parseSenderUaid(args.slice(1));
         const senderUaid = parsed.senderUaid;
-        const rest = parsed.args;
+        let rest = parsed.args;
+        
+        // Check for --json flag
+        const jsonMode = rest.includes('--json');
+        rest = rest.filter(a => a !== '--json');
+        
         if (!rest[0]) {
-          console.error('Usage: chat [--as <senderUaid>] <uaid> [message]');
+          console.error('Usage: chat [--as <senderUaid>] [--json] <uaid> [message]');
           process.exit(1);
         }
         const uaid = rest[0];
         const message = rest.slice(1).join(' ') || null;
-        await chat(uaid, message, { senderUaid });
+        await chat(uaid, message, { senderUaid, json: jsonMode });
         break;
       }
 
@@ -1220,6 +1351,10 @@ async function main() {
         await whoami();
         break;
 
+      case 'refresh-key':
+        await refreshKey();
+        break;
+
       case 'import-key': {
         const existingIdentity = loadIdentity();
         if (existingIdentity) {
@@ -1251,6 +1386,14 @@ async function main() {
           process.exit(1);
         }
         await resolve(args[1]);
+        break;
+
+      case 'check':
+        if (!args[1]) {
+          console.error('Usage: check <uaid>');
+          process.exit(1);
+        }
+        await check(args[1]);
         break;
 
       case 'stats':
