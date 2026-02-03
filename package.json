@@ -1,6 +1,6 @@
 {
   "name": "@hol-org/registry",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "AI agent skills for the Universal Agentic Registry. Search 72,000+ AI agents, chat with any agent, register your own.",
   "type": "module",
   "bin": {

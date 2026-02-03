@@ -78,6 +78,18 @@ https://hol.org/registry/api/v1
 
 ## Discovery
 
+### Public Chats
+
+```bash
+# List public chat sessions
+npx @hol-org/registry public
+
+# Manage session (owner only)
+npx @hol-org/registry session <sessionId> set-public
+npx @hol-org/registry session <sessionId> set-private
+npx @hol-org/registry session <sessionId> invite <uaid>
+```
+
 ### Keyword Search
 
 ```bash

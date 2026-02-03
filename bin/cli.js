@@ -45,6 +45,8 @@ COMMANDS:
   search <query> [limit]    Search for agents (default limit: 5)
   chat <uaid> [message]     Start a chat session with an agent
   sessions [uaid]           List all sessions where your agent is a participant
+  public                    List public chat sessions
+  session <id> <cmd>        Manage session: set-public, set-private, invite <uaid>
   history                   Show recent chat history
   history <uaid>            Show conversation history with a specific agent
   history clear             Clear all chat history
@@ -1420,9 +1422,135 @@ function getRelativeTime(date) {
 }
 
 /**
+ * Get the default sender UAID from claimed agents in identity.json.
+ * Excludes the recipient UAID if provided (to avoid sending to yourself).
+ * Returns the first non-excluded claimed agent, or null if none.
+ */
+function getDefaultSenderUaid(excludeUaid = null) {
+  const identity = loadIdentity();
+  if (identity?.claimedAgents?.length > 0) {
+    // If we have an exclusion, find the first agent that's not the excluded one
+    if (excludeUaid) {
+      const available = identity.claimedAgents.filter(u => u !== excludeUaid);
+      if (available.length > 0) {
+        return available[0];
+      }
+    }
+    return identity.claimedAgents[0];
+  }
+  return null;
+}
+
+/**
  * List all sessions where an agent is a participant (sender or recipient).
  * This allows agents to poll for incoming chat requests.
  */
+async function manageSession(sessionId, action, value) {
+  const identity = loadIdentity();
+  if (!identity || (!API_KEY && !identity.apiKey)) {
+    console.error('Authentication required. Run `claim` first.');
+    return;
+  }
+  
+  const headers = getBrokerHeaders(identity);
+  
+  // Need senderUaid for authorization
+  const senderUaid = getDefaultSenderUaid();
+  if (!senderUaid) {
+     console.error('You must have a claimed agent to manage sessions.');
+     return;
+  }
+
+  try {
+    if (action === 'set-public' || action === 'set-private') {
+      const visibility = action === 'set-public' ? 'public' : 'private';
+      const body = {
+        visibility,
+        senderUaid
+      };
+      
+      const res = await fetch(`${BASE_URL}/chat/session/${sessionId}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify(body)
+      });
+      
+      if (!res.ok) {
+        const err = await res.json();
+        console.error(`Failed to update session: ${err.error || res.statusText}`);
+        return;
+      }
+      
+      const data = await res.json();
+      console.log(`Session ${sessionId} is now ${data.visibility}.`);
+      
+    } else if (action === 'invite') {
+      if (!value) {
+        console.error('Usage: session <id> invite <uaid>');
+        return;
+      }
+      
+      const body = {
+        uaid: value,
+        senderUaid
+      };
+      
+      const res = await fetch(`${BASE_URL}/chat/session/${sessionId}/invite`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body)
+      });
+      
+      if (!res.ok) {
+        const err = await res.json();
+        console.error(`Failed to invite agent: ${err.error || res.statusText}`);
+        return;
+      }
+      
+      console.log(`Invited ${value} to session ${sessionId}.`);
+    } else {
+      console.error('Unknown action. Use: set-public, set-private, invite');
+    }
+  } catch (error) {
+    console.error('Error managing session:', error.message);
+  }
+}
+
+async function listPublicSessions() {
+  const headers = { 'Content-Type': 'application/json' };
+  
+  try {
+    const res = await fetch(`${BASE_URL}/chat/public?limit=20`, { headers });
+    if (!res.ok) {
+      console.error(`Failed to list public sessions: ${res.status} ${res.statusText}`);
+      return;
+    }
+    
+    const data = await res.json();
+    const sessions = data.sessions || [];
+    
+    if (sessions.length === 0) {
+      console.log('\nNo public chat sessions found.');
+      return;
+    }
+
+    console.log(`\n=== Public Chat Sessions (${sessions.length}) ===\n`);
+    
+    for (const sess of sessions) {
+      const created = new Date(sess.createdAt);
+      const relativeTime = getRelativeTime(created);
+      
+      console.log(`Session: ${sess.sessionId}`);
+      console.log(`  Created: ${relativeTime}`);
+      console.log(`  Members: ${sess.members?.length || 0}`);
+      if (sess.topic) console.log(`  Topic: ${sess.topic}`);
+      console.log('');
+    }
+  } catch (error) {
+    console.error('Error listing public sessions:', error.message);
+  }
+}
+
 async function sessions(uaidFilter = null) {
   const identity = loadIdentity();
   
@@ -1505,26 +1633,6 @@ async function sessions(uaidFilter = null) {
 async function main() {
   const args = process.argv.slice(2);
   const command = args[0]?.toLowerCase();
-
-  /**
-   * Get the default sender UAID from claimed agents in identity.json.
-   * Excludes the recipient UAID if provided (to avoid sending to yourself).
-   * Returns the first non-excluded claimed agent, or null if none.
-   */
-  const getDefaultSenderUaid = (excludeUaid = null) => {
-    const identity = loadIdentity();
-    if (identity?.claimedAgents?.length > 0) {
-      // If we have an exclusion, find the first agent that's not the excluded one
-      if (excludeUaid) {
-        const available = identity.claimedAgents.filter(u => u !== excludeUaid);
-        if (available.length > 0) {
-          return available[0];
-        }
-      }
-      return identity.claimedAgents[0];
-    }
-    return null;
-  };
 
   const parseSenderUaid = (argList, recipientUaid = null) => {
     const idx = argList.findIndex((arg) => arg === '--as');
@@ -1648,6 +1756,26 @@ async function main() {
       case 'sessions': {
         const uaidArg = args[1] || null;
         await sessions(uaidArg);
+        break;
+      }
+
+      case 'public': {
+        await listPublicSessions();
+        break;
+      }
+
+      case 'session': {
+        const sessionId = args[1];
+        const action = args[2];
+        const value = args[3]; // for invite
+        
+        if (!sessionId || !action) {
+          console.error('Usage: session <sessionId> <action> [value]');
+          console.error('Actions: set-public, set-private, invite <uaid>');
+          process.exit(1);
+        }
+        
+        await manageSession(sessionId, action, value);
         break;
       }
 
