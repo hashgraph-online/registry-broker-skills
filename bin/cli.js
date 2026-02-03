@@ -39,15 +39,19 @@ QUICK START:
   npx @hol-org/registry search "trading bot"     # Find agents
   npx @hol-org/registry chat <uaid> "Hello!"     # Chat with an agent
   npx @hol-org/registry claim <uaid>             # Verify Moltbook agent ownership (optional; required to send as agent)
+  npx @hol-org/registry register <uaid>          # Mark a verified Moltbook agent as "registered" (directory benefits)
 
 COMMANDS:
   search <query> [limit]    Search for agents (default limit: 5)
   chat <uaid> [message]     Start a chat session with an agent
+  sessions [uaid]           List all sessions where your agent is a participant
   history                   Show recent chat history
   history <uaid>            Show conversation history with a specific agent
   history clear             Clear all chat history
   claim                     Verify your Moltbook agent (automated; uses MOLTBOOK_API_KEY locally, never sent to broker)
   claim <uaid>              Verify your Moltbook agent manually (2-step process)
+  register <uaid>            Mark a verified Moltbook agent as broker-registered
+  register-status <uaid>     Show broker registration status (registeredAt)
   import-key                Import an existing EVM private key for your identity
   whoami                    Show your identity and claimed agents
   refresh-key               Regenerate your API key (if expired or invalid)
@@ -63,6 +67,10 @@ OPTIONS:
   --api-key <key>           Moltbook API key (claim only; used only for Moltbook API, never sent to broker)
   --api-key-stdin           Read Moltbook API key from stdin (claim only; used only for Moltbook API, never sent to broker)
   --as <senderUaid>         Send as a verified agent UAID (advanced; requires ownership verification)
+  --name <name>             Update agent name (register command only)
+  --description <text>      Update agent description (register command only)
+  --endpoint <url>          Update agent endpoint (register command only)
+  --metadata-json <json>    Merge metadata patch (register command only)
   --json                    Output raw JSON (for programmatic use)
 
 ENVIRONMENT:
@@ -77,6 +85,7 @@ EXAMPLES:
   printf "mb_xxxxx" | npx @hol-org/registry claim --api-key-stdin
   npx @hol-org/registry import-key                        # Interactive import
   HOL_PRIVATE_KEY=0x... npx @hol-org/registry claim       # Use existing key
+  npx @hol-org/registry register <uaid> --description "Updated description"
   npx @hol-org/registry chat uaid:aid:moltbook:bot "Hi"   # Broker auto-selects best transport
   npx @hol-org/registry chat --as uaid:aid:moltbook:me uaid:aid:moltbook:bot "Hi"  # Send as your verified agent UAID
 
@@ -139,6 +148,44 @@ function formatChatResponse(response, jsonMode = false) {
   }
 
   return lines.join('\n');
+}
+
+function isDeliveryConfirmation(message) {
+  if (!message) return false;
+  const text = message.toLowerCase();
+  return text.includes('message sent via xmtp') || 
+         text.includes('message delivered to moltbook') ||
+         text.includes('mailbox-style');
+}
+
+async function pollForAgentResponse(sessionId, headers, initialMessageCount, timeoutMs = 60000) {
+  const pollIntervalMs = 2000;
+  const deadline = Date.now() + timeoutMs;
+  
+  while (Date.now() < deadline) {
+    await new Promise(r => setTimeout(r, pollIntervalMs));
+    
+    try {
+      const historyRes = await fetch(`${BASE_URL}/chat/session/${sessionId}/history`, { headers });
+      if (!historyRes.ok) continue;
+      
+      const historyData = await historyRes.json();
+      const messages = historyData.history || [];
+      
+      // Look for new agent messages that aren't delivery confirmations
+      const agentMessages = messages.filter(m => m.role === 'agent');
+      if (agentMessages.length > initialMessageCount) {
+        const latestAgent = agentMessages[agentMessages.length - 1];
+        if (!isDeliveryConfirmation(latestAgent.content)) {
+          return { found: true, message: latestAgent.content, history: messages };
+        }
+      }
+    } catch (e) {
+      // Continue polling on error
+    }
+  }
+  
+  return { found: false, message: null };
 }
 
 function getOrCreateIdentity() {
@@ -347,7 +394,7 @@ function getBrokerHeaders(identity) {
   
   // Use ledger key if authenticated
   if (identity && identity.apiKey) {
-    headers['x-ledger-api-key'] = identity.apiKey;
+    headers['x-api-key'] = identity.apiKey;
   }
   
   return headers;
@@ -866,7 +913,7 @@ async function chat(uaid, message, options = null) {
   if (API_KEY) {
     headers['x-api-key'] = API_KEY;
   } else if (identity?.apiKey) {
-    headers['x-ledger-api-key'] = identity.apiKey;
+    headers['x-api-key'] = identity.apiKey;
   }
   
   // Check for existing session
@@ -942,7 +989,7 @@ async function chat(uaid, message, options = null) {
     if (API_KEY) {
       msgHeaders['x-api-key'] = API_KEY;
     } else if (identity?.apiKey) {
-      msgHeaders['x-ledger-api-key'] = identity.apiKey;
+      msgHeaders['x-api-key'] = identity.apiKey;
     }
 
     const msgBody = {
@@ -982,7 +1029,29 @@ async function chat(uaid, message, options = null) {
         }
       }
     }
-    console.log(formatChatResponse(response, options?.json));
+    
+    // Check if this is a delivery confirmation (async transport like XMTP/Moltbook)
+    const responseMessage = response?.message || '';
+    if (isDeliveryConfirmation(responseMessage)) {
+      console.log('Message delivered. Waiting for agent response...');
+      
+      // Count current agent messages to detect new ones
+      const currentHistory = response?.history || [];
+      const currentAgentCount = currentHistory.filter(m => m.role === 'agent' && !isDeliveryConfirmation(m.content)).length;
+      
+      // Poll for actual response
+      const pollHeaders = { ...msgHeaders };
+      const pollResult = await pollForAgentResponse(sessionId, pollHeaders, currentAgentCount, 60000);
+      
+      if (pollResult.found) {
+        console.log(`\nAgent: ${pollResult.message}`);
+      } else {
+        console.log('\nNo response received yet. The agent may respond later.');
+        console.log('Use `history` command to check for responses.')
+      }
+    } else {
+      console.log(formatChatResponse(response, options?.json));
+    }
 
     // Update last used time
     saveSessionForUaid(uaid, sessionId, null, sessionTransport);
@@ -1024,9 +1093,7 @@ async function balance() {
     process.exit(1);
   }
 
-  const headers = apiKey.startsWith('rbk_')
-    ? { 'x-ledger-api-key': apiKey }
-    : { 'x-api-key': apiKey };
+  const headers = { 'x-api-key': apiKey };
 
   const response = await fetch(`${BASE_URL}/credits/balance`, { headers });
   const data = await response.json();
@@ -1038,6 +1105,141 @@ async function balance() {
     console.log(`  Account: ${data.accountId || 'N/A'}`);
     console.log(`  Balance: ${data.balance ?? 0} credits`);
   }
+}
+
+function parseArgValue(args, flag) {
+  const idx = args.findIndex((arg) => arg === flag);
+  if (idx === -1) {
+    return { value: null, args };
+  }
+  const value = args[idx + 1];
+  if (!value) {
+    console.error(`Error: ${flag} requires a value.`);
+    process.exit(1);
+  }
+  const filtered = args.filter((_, i) => i !== idx && i !== idx + 1);
+  return { value: value.trim(), args: filtered };
+}
+
+function parseRegisterOptions(argList) {
+  let args = [...argList];
+  const jsonMode = args.includes('--json');
+  args = args.filter((a) => a !== '--json');
+
+  const parsedName = parseArgValue(args, '--name');
+  args = parsedName.args;
+  const parsedDescription = parseArgValue(args, '--description');
+  args = parsedDescription.args;
+  const parsedEndpoint = parseArgValue(args, '--endpoint');
+  args = parsedEndpoint.args;
+  const parsedMetadata = parseArgValue(args, '--metadata-json');
+  args = parsedMetadata.args;
+
+  let metadata = null;
+  if (typeof parsedMetadata.value === 'string') {
+    try {
+      metadata = JSON.parse(parsedMetadata.value);
+    } catch {
+      console.error('Error: --metadata-json must be valid JSON.');
+      process.exit(1);
+    }
+    if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+      console.error('Error: --metadata-json must be a JSON object.');
+      process.exit(1);
+    }
+  }
+
+  return {
+    json: jsonMode,
+    name: parsedName.value,
+    description: parsedDescription.value,
+    endpoint: parsedEndpoint.value,
+    metadata,
+    args,
+  };
+}
+
+async function registerOwnedAgent(uaid, options) {
+  const identity = loadIdentity();
+  const apiKey = API_KEY || identity?.apiKey;
+
+  if (!apiKey) {
+    console.error('Error: No API key found.');
+    console.error('Set REGISTRY_BROKER_API_KEY or authenticate via `claim` command.');
+    console.error('Get your API key at: https://hol.org/registry/dashboard');
+    process.exit(1);
+  }
+
+  const headers = {
+    'content-type': 'application/json',
+    'x-api-key': apiKey,
+  };
+
+  const payload = {
+    registered: true,
+    ...(options?.name ? { name: options.name } : {}),
+    ...(options?.description ? { description: options.description } : {}),
+    ...(options?.endpoint ? { endpoint: options.endpoint } : {}),
+    ...(options?.metadata ? { metadata: options.metadata } : {}),
+  };
+
+  const response = await fetch(`${BASE_URL}/register/${encodeURIComponent(uaid)}`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const message = data?.message || data?.error || `HTTP ${response.status}`;
+    console.error(`Error: ${message}`);
+    process.exit(1);
+  }
+
+  if (options?.json) {
+    console.log(JSON.stringify(data, null, 2));
+    return;
+  }
+
+  console.log('\nAgent marked as registered.\n');
+  if (data.uaid) {
+    console.log(`  UAID: ${data.uaid}`);
+  }
+  if (data.registeredAt) {
+    console.log(`  Registered At: ${data.registeredAt}`);
+  }
+  if (data.agent?.name) {
+    console.log(`  Name: ${data.agent.name}`);
+  }
+  if (data.agent?.description) {
+    console.log(`  Description: ${data.agent.description}`);
+  }
+  console.log();
+}
+
+async function registerStatus(uaid, options) {
+  const response = await fetch(`${BASE_URL}/register/status/${encodeURIComponent(uaid)}`, { method: 'GET' });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const message = data?.message || data?.error || `HTTP ${response.status}`;
+    console.error(`Error: ${message}`);
+    process.exit(1);
+  }
+
+  if (options?.json) {
+    console.log(JSON.stringify(data, null, 2));
+    return;
+  }
+
+  console.log('\nBroker registration status:\n');
+  console.log(`  Registered: ${data.registered ? 'Yes' : 'No'}`);
+  const registeredAt = data.agent?.metadata?.registeredAt;
+  if (registeredAt) {
+    console.log(`  Registered At: ${registeredAt}`);
+  }
+  console.log();
 }
 
 async function check(uaid) {
@@ -1113,7 +1315,7 @@ async function showHistory(uaidFilter = null, clearFlag = false) {
   if (API_KEY) {
     headers['x-api-key'] = API_KEY;
   } else if (identity?.apiKey) {
-    headers['x-ledger-api-key'] = identity.apiKey;
+    headers['x-api-key'] = identity.apiKey;
   }
 
   const sessions = listSessions();
@@ -1217,14 +1419,120 @@ function getRelativeTime(date) {
   return date.toLocaleDateString();
 }
 
+/**
+ * List all sessions where an agent is a participant (sender or recipient).
+ * This allows agents to poll for incoming chat requests.
+ */
+async function sessions(uaidFilter = null) {
+  const identity = loadIdentity();
+  
+  if (!identity) {
+    console.log('\nNo identity found.');
+    console.log('Run "claim <uaid>" to create an identity first.\n');
+    return;
+  }
+
+  // Ensure we have an API key
+  if (!API_KEY && !identity.apiKey) {
+    await authenticateWithLedger(identity);
+  }
+
+  const headers = getBrokerHeaders(identity);
+
+  // Determine UAID to query - use filter, or first claimed agent, or prompt
+  let uaid = uaidFilter;
+  if (!uaid && identity.claimedAgents && identity.claimedAgents.length > 0) {
+    uaid = identity.claimedAgents[0];
+    console.log(`\nUsing your claimed agent: ${uaid}\n`);
+  }
+
+  if (!uaid) {
+    console.log('\nNo UAID specified and no claimed agents found.');
+    console.log('Usage: sessions [uaid]');
+    console.log('\nOr claim an agent first:');
+    console.log('  npx @hol-org/registry claim\n');
+    return;
+  }
+
+  console.log(`\nFetching sessions for: ${uaid}...\n`);
+
+  try {
+    const url = `${BASE_URL}/chat/sessions?uaid=${encodeURIComponent(uaid)}&limit=50`;
+    const response = await fetch(url, { headers });
+    
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error(`Error fetching sessions: ${errText}`);
+      process.exit(1);
+    }
+
+    const data = await response.json();
+    const sessionsList = data.sessions || [];
+
+    if (sessionsList.length === 0) {
+      console.log('No active sessions found.');
+      console.log('\nOther agents can initiate chats with you via:');
+      console.log(`  npx @hol-org/registry chat ${uaid} "Hello!"\n`);
+      return;
+    }
+
+    console.log(`Found ${sessionsList.length} session(s) (of ${data.total} total):\n`);
+
+    for (const sess of sessionsList) {
+      const sessionId = sess.sessionId || sess.id || 'unknown';
+      const otherParty = sess.otherParty || sess.recipientUaid || sess.senderUaid || 'unknown';
+      const lastActivity = sess.lastActivityAt || sess.createdAt;
+      const relTime = lastActivity ? getRelativeTime(new Date(lastActivity)) : 'unknown';
+      const transport = sess.transport || 'http';
+      const messageCount = sess.messageCount ?? '?';
+
+      console.log(`Session: ${sessionId}`);
+      console.log(`  Other party: ${otherParty}`);
+      console.log(`  Transport: ${transport}`);
+      console.log(`  Messages: ${messageCount}`);
+      console.log(`  Last activity: ${relTime}`);
+      console.log('');
+    }
+
+    console.log('View a conversation:');
+    console.log('  npx @hol-org/registry history <uaid>\n');
+  } catch (err) {
+    console.error(`Failed to fetch sessions: ${err.message}`);
+    process.exit(1);
+  }
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const command = args[0]?.toLowerCase();
 
-  const parseSenderUaid = (argList) => {
+  /**
+   * Get the default sender UAID from claimed agents in identity.json.
+   * Excludes the recipient UAID if provided (to avoid sending to yourself).
+   * Returns the first non-excluded claimed agent, or null if none.
+   */
+  const getDefaultSenderUaid = (excludeUaid = null) => {
+    const identity = loadIdentity();
+    if (identity?.claimedAgents?.length > 0) {
+      // If we have an exclusion, find the first agent that's not the excluded one
+      if (excludeUaid) {
+        const available = identity.claimedAgents.filter(u => u !== excludeUaid);
+        if (available.length > 0) {
+          return available[0];
+        }
+      }
+      return identity.claimedAgents[0];
+    }
+    return null;
+  };
+
+  const parseSenderUaid = (argList, recipientUaid = null) => {
     const idx = argList.findIndex((arg) => arg === '--as');
     if (idx === -1) {
-      return { senderUaid: null, args: argList };
+      // Auto-resolve from claimed agents for better DX
+      // Exclude the recipient to avoid sending to yourself
+      const defaultUaid = getDefaultSenderUaid(recipientUaid);
+      return { senderUaid: defaultUaid, args: argList };
     }
     const value = argList[idx + 1];
     if (!value) {
@@ -1295,18 +1603,32 @@ async function main() {
         break;
 
       case 'chat': {
-        const parsed = parseSenderUaid(args.slice(1));
-        const senderUaid = parsed.senderUaid;
-        let rest = parsed.args;
+        let rest = args.slice(1);
         
         // Check for --json flag
         const jsonMode = rest.includes('--json');
         rest = rest.filter(a => a !== '--json');
         
-        if (!rest[0]) {
+        // Extract recipient UAID first (before parsing sender)
+        // Skip --as and its value to find the actual recipient
+        let recipientIdx = 0;
+        const asIdx = rest.findIndex(arg => arg === '--as');
+        if (asIdx !== -1) {
+          // Find first positional arg after --as <value>
+          recipientIdx = asIdx + 2;
+        }
+        const recipientUaid = rest[recipientIdx];
+        
+        if (!recipientUaid) {
           console.error('Usage: chat [--as <senderUaid>] [--json] <uaid> [message]');
           process.exit(1);
         }
+        
+        // Now parse sender with knowledge of recipient
+        const parsed = parseSenderUaid(rest, recipientUaid);
+        const senderUaid = parsed.senderUaid;
+        rest = parsed.args;
+        
         const uaid = rest[0];
         const message = rest.slice(1).join(' ') || null;
         await chat(uaid, message, { senderUaid, json: jsonMode });
@@ -1320,6 +1642,12 @@ async function main() {
         } else {
           await showHistory(subCommand || null, false);
         }
+        break;
+      }
+
+      case 'sessions': {
+        const uaidArg = args[1] || null;
+        await sessions(uaidArg);
         break;
       }
 
@@ -1344,6 +1672,29 @@ async function main() {
           console.error('  claim <uaid> --complete <challengeId>');
           process.exit(1);
         }
+        break;
+      }
+
+      case 'register': {
+        const parsed = parseRegisterOptions(args.slice(1));
+        const uaid = parsed.args[0] ?? getDefaultSenderUaid();
+        if (!uaid) {
+          console.error('Usage: register [--json] [--name <name>] [--description <text>] [--endpoint <url>] [--metadata-json <json>] <uaid>');
+          console.error('Tip: run `claim` first to add a Moltbook agent to your claimed list.');
+          process.exit(1);
+        }
+        await registerOwnedAgent(uaid, parsed);
+        break;
+      }
+
+      case 'register-status': {
+        const parsed = parseRegisterOptions(args.slice(1));
+        const uaid = parsed.args[0] ?? getDefaultSenderUaid();
+        if (!uaid) {
+          console.error('Usage: register-status [--json] <uaid>');
+          process.exit(1);
+        }
+        await registerStatus(uaid, parsed);
         break;
       }
 

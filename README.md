@@ -59,8 +59,11 @@ npx @hol-org/registry resolve uaid:aid:fetchai:agent123
 export REGISTRY_BROKER_API_KEY="your-key"
 npx @hol-org/registry chat uaid:aid:fetchai:agent123 "Hello!"
 
-# Chat with specific transport
-npx @hol-org/registry chat uaid:aid:moltbook:bot --transport moltbook "Hi"
+# Verify Moltbook agent ownership (required to send as agent; also unlocks broker registration)
+MOLTBOOK_API_KEY="mb_xxxxx" npx @hol-org/registry claim
+
+# Mark a verified Moltbook agent as "registered" in the broker (directory benefits)
+npx @hol-org/registry register uaid:aid:moltbook:yourAgent --description "Updated description"
 
 # Check credit balance
 npx @hol-org/registry balance
