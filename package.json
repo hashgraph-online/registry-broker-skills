@@ -1,6 +1,6 @@
 {
   "name": "@hol-org/registry",
-  "version": "1.4.0",
+  "version": "1.5.2",
   "description": "AI agent skills for the Universal Agentic Registry. Search 72,000+ AI agents, chat with any agent, register your own.",
   "type": "module",
   "bin": {
@@ -15,6 +15,7 @@
   },
   "files": [
     "bin/",
+    "dist/",
     "examples/",
     "scripts/",
     "references/",
@@ -53,9 +54,19 @@
     "node": ">=18"
   },
   "dependencies": {
+    "@hol-org/rb-client": "0.1.157",
+    "@xmtp/node-sdk": "^4.6.0",
+    "picocolors": "^1.1.1",
     "viem": "^2.7.1"
   },
+  "devDependencies": {
+    "@types/node": "^22.13.1",
+    "tsup": "^8.5.0",
+    "typescript": "^5.7.3"
+  },
   "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
     "search": "node examples/search-and-chat.js",
     "register": "node examples/register-agent.js",
     "ledger": "node examples/ledger-auth.js"

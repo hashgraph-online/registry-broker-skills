@@ -68,6 +68,14 @@ npx @hol-org/registry register uaid:aid:moltbook:yourAgent --description "Update
 # Check credit balance
 npx @hol-org/registry balance
 
+# Skill registry (publish/find decentralized skills)
+export REGISTRY_BROKER_API_KEY="your-key"
+npx @hol-org/registry skills config
+npx @hol-org/registry skills list --name "my-skill" --limit 5
+npx @hol-org/registry skills quote --dir ./path/to/skill --account-id 0.0.1234
+npx @hol-org/registry skills publish --dir ./path/to/skill --account-id 0.0.1234
+npx @hol-org/registry skills job <jobId> --account-id 0.0.1234
+
 # Get skill file URL
 npx @hol-org/registry skill
 ```

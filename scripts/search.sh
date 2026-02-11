@@ -20,4 +20,4 @@ ENCODED_QUERY=$(printf '%s' "$QUERY" | jq -sRr @uri)
 echo "Searching for: $QUERY"
 echo "---"
 
-curl -s "${BASE_URL}/search?q=${ENCODED_QUERY}&limit=${LIMIT}" | jq '.results[] | {uaid, name: .profile.name, description: .profile.description[0:100]}'
+curl -s "${BASE_URL}/search?q=${ENCODED_QUERY}&limit=${LIMIT}" | jq '.hits[] | {uaid, name: (.name // .profile.display_name // .uaid), description: ((.description // .profile.bio // "")[0:100])}'

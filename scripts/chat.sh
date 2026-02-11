@@ -24,10 +24,12 @@ echo "Creating session with: $UAID"
 echo "---"
 
 # Create session
-SESSION_RESPONSE=$(curl -s -X POST "${BASE_URL}/chat/session" \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: $API_KEY" \
-  -d "{\"uaid\": \"$UAID\"}")
+SESSION_RESPONSE=$(
+  curl -s -X POST "${BASE_URL}/chat/session" \
+    -H "Content-Type: application/json" \
+    -H "x-api-key: $API_KEY" \
+    -d "{\"uaid\": \"$UAID\"}"
+)
 
 SESSION_ID=$(echo "$SESSION_RESPONSE" | jq -r '.sessionId')
 
