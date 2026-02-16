@@ -41,7 +41,7 @@ jobs:
           if [[ -n "$VERSION_INPUT" ]]; then
             echo "version=$VERSION_INPUT" >> "$GITHUB_OUTPUT"
           fi
-      - uses: hashgraph-online/skills-publish@v1
+      - uses: hashgraph-online/skill-publish@v1
         with:
           api-base-url: ${{ secrets.RB_BASE_URL }}
           api-key: ${{ secrets.RB_API_KEY }}
