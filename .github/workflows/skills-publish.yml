@@ -30,6 +30,18 @@ jobs:
       issues: write
     steps:
       - uses: actions/checkout@v4
+      - name: Prepare publish package
+        id: package
+        shell: bash
+        run: |
+          PACKAGE_DIR=".publish-package-${GITHUB_RUN_ID}"
+          mkdir -p "${PACKAGE_DIR}/bin" "${PACKAGE_DIR}/examples" "${PACKAGE_DIR}/references" "${PACKAGE_DIR}/scripts"
+          cp SKILL.md skill.json README.md LICENSE index.js package.json "${PACKAGE_DIR}/"
+          cp bin/cli.js "${PACKAGE_DIR}/bin/"
+          cp examples/*.js "${PACKAGE_DIR}/examples/"
+          cp references/*.md "${PACKAGE_DIR}/references/"
+          cp scripts/*.sh "${PACKAGE_DIR}/scripts/"
+          echo "dir=${PACKAGE_DIR}" >> "$GITHUB_OUTPUT"
       - name: Resolve version
         id: vars
         shell: bash
@@ -44,7 +56,7 @@ jobs:
       - uses: hashgraph-online/skill-publish@v1
         with:
           api-key: ${{ secrets.RB_API_KEY }}
-          skill-dir: .
+          skill-dir: ${{ steps.package.outputs.dir }}
           version: ${{ steps.vars.outputs.version }}
           annotate: "true"
           github-token: ${{ github.token }}
