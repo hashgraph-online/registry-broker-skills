@@ -1,0 +1,52 @@
+name: Skills Publish
+
+on:
+  release:
+    types: [published]
+  push:
+    branches:
+      - main
+    paths:
+      - SKILL.md
+      - skill.json
+      - references/**
+      - scripts/**
+      - examples/**
+      - src/**
+      - index.js
+      - package.json
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Optional skill version override
+        required: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resolve version
+        id: vars
+        shell: bash
+        run: |
+          VERSION_INPUT="${{ github.event.inputs.version }}"
+          if [[ "${{ github.event_name }}" == "release" && -z "$VERSION_INPUT" ]]; then
+            VERSION_INPUT="${GITHUB_REF_NAME#v}"
+          fi
+          if [[ -n "$VERSION_INPUT" ]]; then
+            echo "version=$VERSION_INPUT" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: hashgraph-online/skills-publish@v1
+        with:
+          api-base-url: ${{ secrets.RB_BASE_URL }}
+          api-key: ${{ secrets.RB_API_KEY }}
+          account-id: ${{ secrets.RB_ACCOUNT_ID }}
+          skill-dir: .
+          version: ${{ steps.vars.outputs.version }}
+          annotate: "true"
+          github-token: ${{ github.token }}
