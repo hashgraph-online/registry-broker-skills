@@ -278,8 +278,6 @@ This repository supports one-step HCS-26 publishing from GitHub using the first-
 - Automatically validates package files, gets quote, publishes, polls job status, and posts on-chain references back to release notes/PR comments
 - Automatically stamps `repo` and `commit` metadata into the published skill payload
 
-Required repository secrets:
+Required repository secret:
 
-- `RB_BASE_URL`
 - `RB_API_KEY`
-- `RB_ACCOUNT_ID`
