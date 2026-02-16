@@ -271,7 +271,7 @@ Apache-2.0
 
 ## CI/CD: Publish from GitHub
 
-This repository supports one-step HCS-26 publishing from GitHub using the first-party action [`hashgraph-online/skills-publish@v1`](https://github.com/hashgraph-online/skills-publish).
+This repository supports one-step HCS-26 publishing from GitHub using the first-party action [`hashgraph-online/skill-publish@v1`](https://github.com/hashgraph-online/skill-publish).
 
 - Workflow: `.github/workflows/skills-publish.yml`
 - Triggered on `release: published`, `push` to `main`, and manual dispatch
