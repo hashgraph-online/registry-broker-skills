@@ -268,3 +268,18 @@ Points can be used across the HOL ecosystem. [Learn more](https://hol.org/points
 ## License
 
 Apache-2.0
+
+## CI/CD: Publish from GitHub
+
+This repository supports one-step HCS-26 publishing from GitHub using the first-party action [`hashgraph-online/skills-publish@v1`](https://github.com/hashgraph-online/skills-publish).
+
+- Workflow: `.github/workflows/skills-publish.yml`
+- Triggered on `release: published`, `push` to `main`, and manual dispatch
+- Automatically validates package files, gets quote, publishes, polls job status, and posts on-chain references back to release notes/PR comments
+- Automatically stamps `repo` and `commit` metadata into the published skill payload
+
+Required repository secrets:
+
+- `RB_BASE_URL`
+- `RB_API_KEY`
+- `RB_ACCOUNT_ID`
