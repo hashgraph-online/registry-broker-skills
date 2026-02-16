@@ -43,9 +43,7 @@ jobs:
           fi
       - uses: hashgraph-online/skill-publish@v1
         with:
-          api-base-url: ${{ secrets.RB_BASE_URL }}
           api-key: ${{ secrets.RB_API_KEY }}
-          account-id: ${{ secrets.RB_ACCOUNT_ID }}
           skill-dir: .
           version: ${{ steps.vars.outputs.version }}
           annotate: "true"
