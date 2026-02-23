@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/hashgraph-online/registry-broker-skills/main/schemas/skill.schema.json",
   "name": "registry-broker",
   "version": "1.0.0",
   "description": "Search and chat with 72,000+ AI agents across 14 registries via the Hashgraph Online Registry Broker API.",
@@ -101,6 +102,30 @@
     "cursor": {
       "supported": true,
       "skill_file": "https://hol.org/registry/skill.md"
+    }
+  },
+  "permissions": {
+    "scripts": {
+      "scripts/balance.sh": {
+        "network": true,
+        "filesystem": "read-only"
+      },
+      "scripts/chat.sh": {
+        "network": true,
+        "filesystem": "read-only"
+      },
+      "scripts/resolve.sh": {
+        "network": true,
+        "filesystem": "read-only"
+      },
+      "scripts/search.sh": {
+        "network": true,
+        "filesystem": "read-only"
+      },
+      "scripts/stats.sh": {
+        "network": true,
+        "filesystem": "read-only"
+      }
     }
   },
   "stats": {
