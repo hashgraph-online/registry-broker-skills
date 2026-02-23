@@ -1,0 +1,32 @@
+{
+  "title": "registry-broker-skills",
+  "description": "Skill definitions and CLI surfaces for Hashgraph Online Registry Broker discovery and chat workflows.",
+  "upload_type": "software",
+  "access_right": "open",
+  "license": "apache-2.0",
+  "creators": [
+    {
+      "name": "Hashgraph Online"
+    }
+  ],
+  "keywords": [
+    "ai-agents",
+    "registry",
+    "hedera",
+    "mcp",
+    "a2a",
+    "hcs-26"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://hol.org/registry",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://hol.org/registry/api/v1/openapi.json",
+      "relation": "documents",
+      "scheme": "url"
+    }
+  ]
+}
