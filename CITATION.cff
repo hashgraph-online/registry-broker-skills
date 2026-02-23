@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+title: "registry-broker-skills"
+message: "If you use registry-broker-skills, please cite it using this metadata."
+type: software
+authors:
+  - name: "Hashgraph Online"
+repository-code: "https://github.com/hashgraph-online/registry-broker-skills"
+url: "https://hol.org/registry/skills"
+license: "Apache-2.0"
+doi: "10.5281/zenodo.18748323"
