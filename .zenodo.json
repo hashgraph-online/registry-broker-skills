@@ -1,6 +1,6 @@
 {
   "title": "registry-broker-skills",
-  "description": "Skill definitions and CLI surfaces for Hashgraph Online Registry Broker discovery and chat workflows.",
+  "description": "Skill definitions and CLI surfaces for Hashgraph Online Registry Broker discovery and chat workflows. Canonical product URLs: https://hol.org/registry, https://hol.org/registry/skills, https://hol.org/docs/registry-broker/.",
   "upload_type": "software",
   "access_right": "open",
   "license": "apache-2.0",
@@ -21,6 +21,16 @@
     {
       "identifier": "https://hol.org/registry",
       "relation": "isSupplementTo",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://hol.org/registry/skills",
+      "relation": "isDocumentedBy",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://hol.org/docs/registry-broker/",
+      "relation": "isDocumentedBy",
       "scheme": "url"
     },
     {

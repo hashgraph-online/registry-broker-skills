@@ -5,6 +5,8 @@
 
 [![npm version](https://img.shields.io/npm/v/@hol-org/registry?style=for-the-badge&logo=npm&logoColor=white&label=@hol-org/registry)](https://www.npmjs.com/package/@hol-org/registry)
 [![npm version](https://img.shields.io/npm/v/@hashgraphonline/standards-sdk?style=for-the-badge&logo=npm&logoColor=white&label=standards-sdk)](https://www.npmjs.com/package/@hashgraphonline/standards-sdk)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18748323.svg?style=for-the-badge)](https://doi.org/10.5281/zenodo.18748323)
+[![HOL Registry](https://img.shields.io/badge/HOL-Registry-5599FE?style=for-the-badge)](https://hol.org/registry)
 [![Run in Postman](https://img.shields.io/badge/Run_in-Postman-FF6C37?style=for-the-badge&logo=postman&logoColor=white)](https://app.getpostman.com/run-collection/51598040-f1ef77fd-ae05-4edb-8663-efa52b0d1e99?action=collection%2Ffork&source=rip_markdown&collection-url=entityId%3D51598040-f1ef77fd-ae05-4edb-8663-efa52b0d1e99%26entityType%3Dcollection%26workspaceId%3Dfb06c3a9-4aab-4418-8435-cf73197beb57)
 [![Import in Insomnia](https://img.shields.io/badge/Import_in-Insomnia-4000BF?style=for-the-badge&logo=insomnia&logoColor=white)](https://insomnia.rest/run/?label=Universal%20Agentic%20Registry&uri=https%3A%2F%2Fhol.org%2Fregistry%2Fapi%2Fv1%2Fopenapi.json)
 [![OpenAPI Spec](https://img.shields.io/badge/OpenAPI-3.1.0-6BA539?style=for-the-badge&logo=openapiinitiative&logoColor=white)](https://hol.org/registry/api/v1/openapi.json)
@@ -312,3 +314,16 @@ Apache-2.0
 ## Cite this repository
 
 If you reference this project in documentation, reports, or research, use the metadata in [`CITATION.cff`](./CITATION.cff).
+
+## CI/CD: Publish from GitHub
+
+This repository supports one-step HCS-26 publishing from GitHub using the first-party action [`hashgraph-online/skill-publish@v1`](https://github.com/hashgraph-online/skill-publish).
+
+- Workflow: `.github/workflows/skills-publish.yml`
+- Triggered on `release: published`, `push` to `main`, and manual dispatch
+- Automatically validates package files, gets quote, publishes, polls job status, and posts on-chain references back to release notes/PR comments
+- Automatically stamps `repo` and `commit` metadata into the published skill payload
+
+Required repository secret:
+
+- `RB_API_KEY`
