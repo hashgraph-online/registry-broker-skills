@@ -161,22 +161,26 @@ export async function validateSkillPackage(
     skillJson.value.manifest.trim().length > 0
       ? skillJson.value.manifest.trim()
       : null;
+  const manifestFromSkillJsonMissing =
+    manifestFromSkillJson !== null && !visibleFileNames.has(manifestFromSkillJson);
 
-  if (manifestFromSkillJson && !visibleFileNames.has(manifestFromSkillJson)) {
+  if (manifestFromSkillJsonMissing) {
     addError(`skill.json.manifest references missing file "${manifestFromSkillJson}".`);
   }
 
   const manifestFileName =
-    (manifestFromSkillJson && visibleFileNames.has(manifestFromSkillJson)
-      ? manifestFromSkillJson
-      : null) ??
-    (visibleFileNames.has('SKILL.json')
-      ? 'SKILL.json'
-      : visibleFileNames.has(DEFAULT_SKILL_MANIFEST_FILE)
-        ? DEFAULT_SKILL_MANIFEST_FILE
-        : null);
+    manifestFromSkillJsonMissing
+      ? null
+      : ((manifestFromSkillJson && visibleFileNames.has(manifestFromSkillJson)
+          ? manifestFromSkillJson
+          : null) ??
+        (visibleFileNames.has('SKILL.json')
+          ? 'SKILL.json'
+          : visibleFileNames.has(DEFAULT_SKILL_MANIFEST_FILE)
+            ? DEFAULT_SKILL_MANIFEST_FILE
+            : null));
 
-  if (!manifestFileName) {
+  if (!manifestFileName && !manifestFromSkillJsonMissing) {
     addError(
       `Missing manifest file. Add "SKILL.json" or "${DEFAULT_SKILL_MANIFEST_FILE}" and set skill.json.manifest.`,
     );
