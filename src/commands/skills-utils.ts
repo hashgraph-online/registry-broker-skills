@@ -183,7 +183,7 @@ export async function initSkillPackage(params: {
     .replace(/^-+|-+$/g, '');
   const homepage = `https://example.com/skills/${slug || 'my-skill'}`;
   const repo = 'https://github.com/your-org/your-skill-repo';
-  const commit = '0000000000000000000000000000000000000000';
+  const commit = '';
 
   const skillJson = {
     name: params.name,

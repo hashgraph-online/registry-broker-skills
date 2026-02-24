@@ -15,6 +15,7 @@ export const SHA256_PATTERN = /^(?:sha256:)?[a-f0-9]{64}$/i;
 
 const RAW_SHA256_PATTERN = /^[a-f0-9]{64}$/i;
 const COMMIT_PATTERN = /^[a-f0-9]{7,64}$/i;
+const ALL_ZERO_COMMIT_PATTERN = /^0+$/;
 const HRL_PATTERN = /^hcs:\/\/\d+\/\d+\.\d+\.\d+$/;
 
 const toPosixPath = (value: string): string => value.split(path.sep).join('/');
@@ -128,6 +129,8 @@ const validateMetadata = (
   const commit = getOptionalString(metadata.commit);
   if (commit && !COMMIT_PATTERN.test(commit)) {
     addError(`${label}.commit must be a hexadecimal commit hash (7-64 chars).`);
+  } else if (commit && ALL_ZERO_COMMIT_PATTERN.test(commit)) {
+    addError(`${label}.commit must not be all zeros.`);
   }
 
   if (!name || !description) {
