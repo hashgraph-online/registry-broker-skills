@@ -13,7 +13,8 @@ import { REGISTRY_BROKER_API_KEY } from '../config';
 import { ensureBrokerApiKey } from '../auth';
 import { loadIdentity } from '../identity';
 import { createRbClient } from '../rb';
-import { initSkillPackage, parseFlag, parseOpt } from './skills-utils';
+import { guessMimeType, initSkillPackage, parseFlag, parseOpt } from './skills-utils';
+import { handleSkillsVerification } from './skills-verification';
 import {
   printSkillItem,
   printSkillList,
@@ -52,23 +53,6 @@ Notes:
   - when using static API keys, job status typically requires --account-id to authorize access.
 `;
 
-const guessMimeType = (fileName: string): string => {
-  const lower = fileName.toLowerCase();
-  if (lower.endsWith('.md') || lower.endsWith('.markdown')) {
-    return 'text/markdown';
-  }
-  if (lower.endsWith('.json')) {
-    return 'application/json';
-  }
-  if (lower.endsWith('.yaml') || lower.endsWith('.yml')) {
-    return 'text/yaml';
-  }
-  if (lower.endsWith('.txt')) {
-    return 'text/plain';
-  }
-  return 'application/octet-stream';
-};
-
 const rewriteSkillJson = (
   raw: Buffer<ArrayBufferLike>,
   overrides: { name?: string; version?: string },
@@ -87,7 +71,7 @@ const rewriteSkillJson = (
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null;
+  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const isSkillsMyListResponseLike = (value: unknown): value is SkillsMyListResponseLike => {
   if (!isRecord(value)) {
@@ -212,6 +196,15 @@ export async function handleSkills(rawArgs: string[]): Promise<void> {
     const parsedJson = parseFlag(rest, '--json');
     const jsonMode = parsedJson.enabled;
     rest = parsedJson.rest;
+
+    const handledVerification = await handleSkillsVerification({
+      subcommand: sub,
+      args: rest,
+      jsonMode,
+    });
+    if (handledVerification) {
+      return;
+    }
 
     const client = createRbClient();
 

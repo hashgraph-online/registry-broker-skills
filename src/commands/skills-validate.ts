@@ -180,7 +180,7 @@ export async function validateSkillPackage(
             ? DEFAULT_SKILL_MANIFEST_FILE
             : null));
 
-  if (!manifestFileName && !manifestFromSkillJsonMissing) {
+  if (skillJson && !manifestFileName && !manifestFromSkillJsonMissing) {
     addError(
       `Missing manifest file. Add "SKILL.json" or "${DEFAULT_SKILL_MANIFEST_FILE}" and set skill.json.manifest.`,
     );

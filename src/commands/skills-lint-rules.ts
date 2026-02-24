@@ -162,12 +162,19 @@ export const validateSkillJson = (
   }
 
   const metadataValue = skillJson.metadata;
-  const metadata = isRecord(metadataValue) ? metadataValue : skillJson;
+  let metadata: JsonObject | null = null;
+  if (metadataValue === undefined) {
+    metadata = skillJson;
+  } else if (isRecord(metadataValue)) {
+    metadata = metadataValue;
+  }
   if (metadataValue !== undefined && !isRecord(metadataValue)) {
     addError('skill.json.metadata must be a JSON object when provided.');
   }
 
-  const validatedMetadata = validateMetadata(metadata, 'skill.json metadata', addError);
+  const validatedMetadata = metadata
+    ? validateMetadata(metadata, 'skill.json metadata', addError)
+    : null;
   if (validatedMetadata && name && validatedMetadata.name !== name) {
     addError('skill.json metadata.name must match skill.json.name.');
   }
