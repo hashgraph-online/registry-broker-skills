@@ -36,6 +36,33 @@ export type SkillsMyListResponseLike = {
   upvoted: SkillsListResponseLike;
 };
 
+export type SkillsVerificationRequestLike = {
+  id?: string | null;
+  network?: string | null;
+  name?: string | null;
+  version?: string | null;
+  tier?: string | null;
+  status?: string | null;
+  usdCents?: number | null;
+  creditsCharged?: number | null;
+  creditAccountId?: string | null;
+  reservationId?: string | null;
+  requestedBy?: {
+    userId?: string | null;
+    accountId?: string | null;
+    email?: string | null;
+  } | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+export type SkillsVerificationStatusLike = {
+  name?: string | null;
+  verified?: boolean | null;
+  previouslyVerified?: boolean | null;
+  pendingRequest?: SkillsVerificationRequestLike | null;
+};
+
 export type SkillsConfigLike = {
   enabled?: boolean | null;
   network?: string | null;
@@ -83,6 +110,13 @@ const formatDate = (iso: string | null | undefined): string => {
   const hh = String(d.getUTCHours()).padStart(2, '0');
   const mi = String(d.getUTCMinutes()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd} ${hh}:${mi}Z`;
+};
+
+const formatUsdCents = (value: number | null | undefined): string => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return pc.dim('-');
+  }
+  return `$${(value / 100).toFixed(2)}`;
 };
 
 export function printSkillsConfig(config: SkillsConfigLike): void {
@@ -247,7 +281,7 @@ export function printSkillsInitResult(result: {
   console.log(`${pc.bold('Initialized skill package')}: ${result.name} ${pc.dim(result.version)}`);
   console.log(`${pc.bold('dir')}: ${result.dir}`);
   console.log(`${pc.bold('created')}: ${result.created.join(', ')}`);
-  console.log(pc.dim('Next: edit SKILL.md, then run `skills validate` and `skills publish`.'));
+  console.log(pc.dim('Next: edit SKILL.md and your manifest file, then run `skills lint` and `skills publish`.'));
 }
 
 export function printSkillsValidateResult(result: {
@@ -273,5 +307,79 @@ export function printSkillsValidateResult(result: {
     for (const e of result.errors) {
       console.log(`- ${e}`);
     }
+  }
+}
+
+export function printSkillVerificationRequestCreated(
+  request: SkillsVerificationRequestLike,
+): void {
+  console.log(pc.bold('Skill verification requested'));
+  if (request.name) {
+    console.log(`${pc.bold('Skill')}: ${request.name}`);
+  }
+  if (request.version) {
+    console.log(`${pc.bold('Version')}: ${request.version}`);
+  }
+  if (request.tier) {
+    console.log(`${pc.bold('Tier')}: ${request.tier}`);
+  }
+  if (request.status) {
+    const status =
+      request.status === 'pending' ? pc.yellow('pending') : request.status;
+    console.log(`${pc.bold('Status')}: ${status}`);
+  }
+  if (request.id) {
+    console.log(`${pc.bold('Request ID')}: ${request.id}`);
+  }
+  if (typeof request.usdCents === 'number') {
+    console.log(`${pc.bold('Fee')}: ${formatUsdCents(request.usdCents)}`);
+  }
+  if (typeof request.creditsCharged === 'number') {
+    console.log(`${pc.bold('Credits Charged')}: ${request.creditsCharged}`);
+  }
+  if (request.createdAt) {
+    console.log(`${pc.bold('Created')}: ${formatDate(request.createdAt)}`);
+  }
+}
+
+export function printSkillVerificationStatus(
+  status: SkillsVerificationStatusLike,
+): void {
+  const name = status.name ?? '(unknown)';
+  const verified = status.verified === true ? pc.green('yes') : pc.dim('no');
+  const previouslyVerified =
+    status.previouslyVerified === true ? pc.green('yes') : pc.dim('no');
+
+  console.log(pc.bold(name));
+  console.log(`${pc.bold('Verified')}: ${verified}`);
+  console.log(`${pc.bold('Previously verified')}: ${previouslyVerified}`);
+
+  const pending = status.pendingRequest ?? null;
+  if (!pending) {
+    console.log(`${pc.bold('Pending request')}: ${pc.dim('none')}`);
+    return;
+  }
+
+  console.log(`${pc.bold('Pending request')}:`);
+  if (pending.id) {
+    console.log(`- id: ${pending.id}`);
+  }
+  if (pending.tier) {
+    console.log(`- tier: ${pending.tier}`);
+  }
+  if (pending.status) {
+    console.log(`- status: ${pending.status}`);
+  }
+  if (typeof pending.usdCents === 'number') {
+    console.log(`- fee: ${formatUsdCents(pending.usdCents)}`);
+  }
+  if (typeof pending.creditsCharged === 'number') {
+    console.log(`- credits: ${pending.creditsCharged}`);
+  }
+  if (pending.createdAt) {
+    console.log(`- created: ${formatDate(pending.createdAt)}`);
+  }
+  if (pending.updatedAt) {
+    console.log(`- updated: ${formatDate(pending.updatedAt)}`);
   }
 }

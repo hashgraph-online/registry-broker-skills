@@ -8,10 +8,16 @@
 [![Run in Postman](https://img.shields.io/badge/Run_in-Postman-FF6C37?style=for-the-badge&logo=postman&logoColor=white)](https://app.getpostman.com/run-collection/51598040-f1ef77fd-ae05-4edb-8663-efa52b0d1e99?action=collection%2Ffork&source=rip_markdown&collection-url=entityId%3D51598040-f1ef77fd-ae05-4edb-8663-efa52b0d1e99%26entityType%3Dcollection%26workspaceId%3Dfb06c3a9-4aab-4418-8435-cf73197beb57)
 [![Import in Insomnia](https://img.shields.io/badge/Import_in-Insomnia-4000BF?style=for-the-badge&logo=insomnia&logoColor=white)](https://insomnia.rest/run/?label=Universal%20Agentic%20Registry&uri=https%3A%2F%2Fhol.org%2Fregistry%2Fapi%2Fv1%2Fopenapi.json)
 [![OpenAPI Spec](https://img.shields.io/badge/OpenAPI-3.1.0-6BA539?style=for-the-badge&logo=openapiinitiative&logoColor=white)](https://hol.org/registry/api/v1/openapi.json)
+[![skill.json schema](https://img.shields.io/badge/skill.json-JSON_Schema-2563EB?style=for-the-badge&logo=json&logoColor=white)](./schemas/skill.schema.json)
 
 ## What is this?
 
 This repository contains **skill definitions** for the [Universal Agentic Registry](https://hol.org/registry) — the connectivity layer for the autonomous web. Skills are instruction files that teach AI coding assistants how to interact with the Registry Broker API.
+
+It is designed for developer-intent discovery around:
+- MCP server registry and MCP server discovery
+- Agent skills registry and skill package publishing
+- Agent directory CLI workflows and API-first integration
 
 The `SKILL.md` file can be consumed by:
 - **Claude Code / Claude Desktop** — via MCP or direct skill loading
@@ -19,6 +25,32 @@ The `SKILL.md` file can be consumed by:
 - **Cursor** — as project instructions
 - **OpenClaw / ClawHub** — native skill format
 - **Any AI coding assistant** — universal markdown format
+
+## Share & Embed
+
+Use these snippets in your README, docs, or release notes to link canonical skill surfaces:
+
+```md
+[![Listed on Universal Agentic Registry](https://img.shields.io/badge/Listed_on-HOL_Registry-5599FE?style=for-the-badge)](https://hol.org/registry/skills)
+[![Publish with skill-publish](https://img.shields.io/badge/Publish-skill--publish-7C3AED?style=for-the-badge)](https://github.com/hashgraph-online/skill-publish)
+```
+
+Direct references:
+- Skills index: `https://hol.org/registry/skills`
+- API docs: `https://hol.org/registry/docs`
+- OpenAPI schema: `https://hol.org/registry/api/v1/openapi.json`
+- Skill publishing action: `https://github.com/hashgraph-online/skill-publish`
+
+## Schema & Validation
+
+- Canonical manifest schema: [`schemas/skill.schema.json`](./schemas/skill.schema.json)
+- SchemaStore submission kit: [`references/SCHEMASTORE-SUBMISSION.md`](./references/SCHEMASTORE-SUBMISSION.md)
+- Syndication kit: [`references/SYNDICATION-KIT.md`](./references/SYNDICATION-KIT.md)
+
+## DOI Readiness
+
+- Zenodo metadata: [`.zenodo.json`](./.zenodo.json)
+- Citation metadata: [`CITATION.cff`](./CITATION.cff)
 
 ## What is the Universal Registry?
 
@@ -71,7 +103,11 @@ npx @hol-org/registry balance
 # Skill registry (publish/find decentralized skills)
 export REGISTRY_BROKER_API_KEY="your-key"
 npx @hol-org/registry skills config
+npx @hol-org/registry skills init --dir ./my-skill --name "my-skill" --version 0.1.0
+npx @hol-org/registry skills lint --dir ./my-skill
 npx @hol-org/registry skills list --name "my-skill" --limit 5
+npx @hol-org/registry skills verify --name "my-skill" --tier basic --account-id 0.0.1234
+npx @hol-org/registry skills verification-status --name "my-skill" --account-id 0.0.1234
 npx @hol-org/registry skills quote --dir ./path/to/skill --account-id 0.0.1234
 npx @hol-org/registry skills publish --dir ./path/to/skill --account-id 0.0.1234
 npx @hol-org/registry skills job <jobId> --account-id 0.0.1234
@@ -145,10 +181,14 @@ registry-broker-skills/
 │   ├── search-and-chat.js    # Search and chat workflow
 │   ├── register-agent.js     # Agent registration
 │   └── ledger-auth.js        # Wallet authentication
-└── references/           # API documentation
-    ├── API.md            # Complete API reference
-    ├── PROTOCOLS.md      # Supported protocols
-    └── MCP.md            # MCP server reference
+├── references/           # API documentation + submission kits
+│   ├── API.md            # Complete API reference
+│   ├── PROTOCOLS.md      # Supported protocols
+│   ├── MCP.md            # MCP server reference
+│   ├── SCHEMASTORE-SUBMISSION.md
+│   └── SYNDICATION-KIT.md
+└── schemas/
+    └── skill.schema.json # JSON Schema for skill.json
 ```
 
 ### Scripts
@@ -222,7 +262,7 @@ export REGISTRY_BROKER_API_KEY="your-key"
 | [`hashnet-mcp-js`](https://github.com/hashgraph-online/hashnet-mcp-js) | MCP server for Registry Broker |
 | [`standards-sdk`](https://github.com/hashgraph-online/standards-sdk) | TypeScript/JavaScript SDK |
 | [`universal-registry-quickstart`](https://github.com/hashgraph-online/universal-registry-quickstart) | Quickstart example project |
-| [`registry-broker`](https://github.com/hashgraph-online/registry-broker) | The Registry Broker service |
+| [`skill-publish`](https://github.com/hashgraph-online/skill-publish) | GitHub Action for quote/publish/poll skill release workflows |
 
 ## Using with AI Assistants
 
@@ -268,3 +308,7 @@ Points can be used across the HOL ecosystem. [Learn more](https://hol.org/points
 ## License
 
 Apache-2.0
+
+## Cite this repository
+
+If you reference this project in documentation, reports, or research, use the metadata in [`CITATION.cff`](./CITATION.cff).

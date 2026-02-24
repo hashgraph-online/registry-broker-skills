@@ -19,8 +19,10 @@
     "examples/",
     "scripts/",
     "references/",
+    "schemas/",
     "SKILL.md",
     "skill.json",
+    "CITATION.cff",
     "index.js"
   ],
   "homepage": "https://hol.org/registry",
