@@ -145,6 +145,7 @@ export async function main() {
       await handleSkills(args.slice(1));
       return;
     }
+    console.log(`No detailed help available for "${command}". Showing general help:\n`);
     console.log(HELP);
     return;
   }

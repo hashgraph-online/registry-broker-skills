@@ -14,15 +14,15 @@ const isVerificationTier = (value: string): value is SkillVerificationTier =>
 type SkillVerificationTier = 'basic' | 'express';
 
 type SkillVerificationRequestLike = {
-  id?: string;
-  name?: string;
-  tier?: string;
-  status?: string;
-  usdCents?: number;
-  creditsCharged?: number;
-  createdAt?: string;
-  updatedAt?: string;
-  version?: string;
+  id?: string | null;
+  name?: string | null;
+  tier?: string | null;
+  status?: string | null;
+  usdCents?: number | null;
+  creditsCharged?: number | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  version?: string | null;
 };
 
 type SkillVerificationRequestCreateResponseLike = {
@@ -30,14 +30,31 @@ type SkillVerificationRequestCreateResponseLike = {
 };
 
 type SkillVerificationStatusResponseLike = {
-  name?: string;
-  verified?: boolean;
-  previouslyVerified?: boolean;
+  name?: string | null;
+  verified?: boolean | null;
+  previouslyVerified?: boolean | null;
   pendingRequest?: SkillVerificationRequestLike | null;
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const isOptionalString = (
+  value: unknown,
+): value is string | null | undefined =>
+  value === undefined || value === null || typeof value === 'string';
+
+const isOptionalNumber = (
+  value: unknown,
+): value is number | null | undefined =>
+  value === undefined ||
+  value === null ||
+  (typeof value === 'number' && Number.isFinite(value));
+
+const isOptionalBoolean = (
+  value: unknown,
+): value is boolean | null | undefined =>
+  value === undefined || value === null || typeof value === 'boolean';
 
 const isSkillVerificationRequestLike = (
   value: unknown,
@@ -45,13 +62,17 @@ const isSkillVerificationRequestLike = (
   if (!isRecord(value)) {
     return false;
   }
-  if (typeof value.name !== 'string') {
-    return false;
-  }
-  if (typeof value.tier !== 'string') {
-    return false;
-  }
-  if (typeof value.status !== 'string') {
+  if (
+    !isOptionalString(value.id) ||
+    !isOptionalString(value.name) ||
+    !isOptionalString(value.tier) ||
+    !isOptionalString(value.status) ||
+    !isOptionalString(value.createdAt) ||
+    !isOptionalString(value.updatedAt) ||
+    !isOptionalString(value.version) ||
+    !isOptionalNumber(value.usdCents) ||
+    !isOptionalNumber(value.creditsCharged)
+  ) {
     return false;
   }
   return true;
@@ -72,13 +93,13 @@ const isSkillVerificationStatusResponseLike = (
   if (!isRecord(value)) {
     return false;
   }
-  if (typeof value.name !== 'string') {
+  if (!isOptionalString(value.name)) {
     return false;
   }
-  if (typeof value.verified !== 'boolean') {
+  if (!isOptionalBoolean(value.verified)) {
     return false;
   }
-  if (typeof value.previouslyVerified !== 'boolean') {
+  if (!isOptionalBoolean(value.previouslyVerified)) {
     return false;
   }
   if (value.pendingRequest === undefined || value.pendingRequest === null) {

@@ -147,27 +147,10 @@ const loadSkillFiles = async (
     if (entry === 'skill.json') {
       data = rewriteSkillJson(data, overrides);
     }
-    const lower = entry.toLowerCase();
-    const role: SkillRegistryFileInput['role'] =
-      entry === 'SKILL.md'
-        ? 'skill-md'
-        : entry === 'skill.json'
-          ? 'skill-json'
-          : lower === 'logo.png' ||
-              lower === 'logo.jpg' ||
-              lower === 'logo.jpeg' ||
-              lower === 'logo.webp' ||
-              lower === 'icon.png' ||
-              lower === 'icon.jpg' ||
-              lower === 'icon.jpeg' ||
-              lower === 'icon.webp'
-            ? 'skill-icon'
-            : 'file';
     files.push({
       name: entry,
       base64: data.toString('base64'),
       mimeType: guessMimeType(entry),
-      role,
     });
   }
 
