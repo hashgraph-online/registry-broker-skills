@@ -25,12 +25,13 @@ import {
 import type { SkillsMyListResponseLike } from './skills-output';
 import { validateSkillPackage } from './skills-validate';
 
-const SKILLS_HELP = `Usage: skills <config|list|get|init|validate|my-list|upvote|unupvote|vote-status|quote|publish|job|ownership> [...args] [--json]
+const SKILLS_HELP = `Usage: skills <config|list|get|init|lint|validate|my-list|upvote|unupvote|vote-status|quote|publish|job|ownership> [...args] [--json]
 
 Subcommands:
   skills config
   skills get --name <name> [--version <version>] [--include-files]
   skills init --dir <path> --name <name> --version <version> [--description <text>] [--force]
+  skills lint --dir <skillDir>
   skills validate --dir <skillDir>
   skills list [--name <name>] [--version <version>] [--limit <n>] [--cursor <cursor>] [--include-files]
   skills my-list [--limit <n>] [--cursor <cursor>] [--account-id <id>]
@@ -46,6 +47,7 @@ Notes:
   - skills list is public (no API key required).
   - skills my-list requires an API key.
   - skills upvote/unupvote/vote-status require an API key.
+  - skills lint/validate do local package linting plus broker limit checks.
   - skills quote/publish/job/ownership require an API key.
   - when using static API keys, job status typically requires --account-id to authorize access.
 `;
@@ -306,12 +308,12 @@ export async function handleSkills(rawArgs: string[]): Promise<void> {
       return;
     }
 
-    if (sub === 'validate') {
+    if (sub === 'validate' || sub === 'lint') {
       const parsedDir = parseOpt(rest, '--dir');
       rest = parsedDir.rest;
       const dir = parsedDir.value ?? rest[0];
       if (!dir) {
-        console.error('Usage: skills validate --dir <skillDir> [--json]');
+        console.error(`Usage: skills ${sub} --dir <skillDir> [--json]`);
         process.exit(1);
       }
       const result = await validateSkillPackage(client, dir);

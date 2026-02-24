@@ -30,7 +30,7 @@ COMMANDS:
   stats                     Get platform statistics
   balance                   Check credit balance (requires API key)
   skill                     Print the skill.md URL
-  skills <cmd>              Skill registry: config | list | get | init | validate | quote | publish | job | ownership
+  skills <cmd>              Skill registry: config | list | get | init | lint | validate | my-list | upvote | vote-status | quote | publish | job | ownership
   help                      Show this help message
 
 OPTIONS:
@@ -49,7 +49,7 @@ OPTIONS:
   --description <text>      Update agent description (register) or set skill description (skills init)
   --endpoint <url>          Update agent endpoint (register command only)
   --metadata-json <json>    Merge metadata patch (register command only)
-  --dir <path>              Skill directory (skills quote/publish)
+  --dir <path>              Skill directory (skills init/lint/validate/quote/publish)
   --version <version>       Override skill.json version (skills quote/publish)
   --cursor <cursor>         Pagination cursor (skills list)
   --include-files           Include file descriptors (skills list)
@@ -75,6 +75,8 @@ EXAMPLES:
   npx @hol-org/registry chat --as uaid:aid:moltbook:me uaid:aid:moltbook:bot "Hi"  # Send as your verified agent UAID
   REGISTRY_BROKER_API_URL=https://registry-staging.hol.org/api/v1 npx @hol-org/registry xmtp-roundtrip <fromUaid> <toUaid> "Ping"
   npx @hol-org/registry skills config
+  npx @hol-org/registry skills init --dir ./my-skill --name "my-skill" --version 0.1.0
+  npx @hol-org/registry skills lint --dir ./my-skill
   npx @hol-org/registry skills list --name "registry-broker" --limit 5
   npx @hol-org/registry skills quote --dir ./path/to/skill --account-id 0.0.1234
   npx @hol-org/registry skills publish --dir ./path/to/skill --account-id 0.0.1234
