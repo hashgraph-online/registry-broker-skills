@@ -29,6 +29,10 @@ import { xmtpRoundtrip } from './xmtp/roundtrip';
 
 type SenderParse = { senderUaid: string | null; args: string[] };
 
+function isHelpFlag(value: string | undefined): boolean {
+  return value === '--help' || value === '-h';
+}
+
 function parseSenderUaid(argList: string[], recipientUaid: string | null) {
   const idx = argList.findIndex((arg) => arg === '--as');
   if (idx === -1) {
@@ -129,6 +133,22 @@ export async function main() {
 
   const args = process.argv.slice(2);
   const command = args[0]?.toLowerCase();
+  const subCommand = args[1]?.toLowerCase();
+
+  if (command === undefined || command === 'help' || isHelpFlag(command)) {
+    console.log(HELP);
+    return;
+  }
+
+  if (isHelpFlag(subCommand)) {
+    if (command === 'skills') {
+      await handleSkills(args.slice(1));
+      return;
+    }
+    console.log(`No detailed help available for "${command}". Showing general help:\n`);
+    console.log(HELP);
+    return;
+  }
 
   try {
     switch (command) {

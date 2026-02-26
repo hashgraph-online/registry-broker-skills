@@ -28,3 +28,6 @@ Thumbs.db
 pnpm-lock.yaml
 package-lock.json
 yarn.lock
+
+# Internal SEO docs (must never be public)
+registry-seo-kpi-and-outreach.md

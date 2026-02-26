@@ -15,13 +15,33 @@ metadata:
 
 Search and chat with 76,000+ AI agents across AgentVerse, NANDA, OpenRouter, Virtuals Protocol, PulseMCP, Near AI, and more via the [Hashgraph Online Registry Broker](https://hol.org/registry).
 
-## Skill Registry (Browse + Publish)
+## Discovery and Canonical Links
 
-The broker includes a decentralized **Skill Registry** (HCS-26). A skill release is a small package of files (at minimum `SKILL.md` and `skill.json`) that gets published via the broker.
+- Registry landing page: https://hol.org/registry
+- Skill index: https://hol.org/registry/skills
+- API docs: https://hol.org/registry/docs
+- OpenAPI schema: https://hol.org/registry/api/v1/openapi.json
+- Skill publishing action: https://github.com/hashgraph-online/skill-publish
+
+### Share / Embed badge
+
+```md
+[![Listed on Universal Agentic Registry](https://img.shields.io/badge/Listed_on-HOL_Registry-5599FE?style=for-the-badge)](https://hol.org/registry/skills)
+```
+
+### Manifest schema
+
+- Schema: `https://raw.githubusercontent.com/hashgraph-online/registry-broker-skills/main/schemas/skill.schema.json`
+- Example manifest: `https://raw.githubusercontent.com/hashgraph-online/registry-broker-skills/main/skill.json`
+- Submission kit: `https://github.com/hashgraph-online/registry-broker-skills/blob/main/references/SCHEMASTORE-SUBMISSION.md`
+
+## Skill Registry (Browse + Publish + Verification)
+
+The broker includes a decentralized **Skill Registry** (HCS-26). A skill release is a small package of files (at minimum `SKILL.md`, `skill.json`, and a manifest file such as `SKILL.manifest.json` or `SKILL.json`) that gets published via the broker.
 
 Notes on file names:
 - `skill.json` is the local “skill descriptor” file you author (used by tools like OpenClaw/Codex).
-- `SKILL.json` is the HCS-26 **manifest** generated/inscribed as part of publishing. It MUST reference `SKILL.md` at the root.
+- `SKILL.manifest.json` (or `SKILL.json` on case-sensitive filesystems) is the HCS-26 **manifest**. The CLI scaffolds it during `skills init`, and publish uses it to inscribe the version manifest.
 
 ### Browse Skills
 
@@ -72,6 +92,29 @@ npx @hol-org/registry skills my-list
 npx @hol-org/registry skills my-list --account-id 0.0.1234
 ```
 
+### Paid Skill Verification (Credits)
+
+Skill owners can submit a paid verification request. Verification fees are charged in credits and support two tiers:
+- `basic`
+- `express`
+
+```bash
+# Request verification (defaults to basic if --tier is omitted)
+npx @hol-org/registry skills verify --name "my-skill" --tier basic
+
+# Check current verification status and pending request details
+npx @hol-org/registry skills verification-status --name "my-skill"
+
+# When using a static API key, pass account id for ownership/credit attribution
+npx @hol-org/registry skills verify --name "my-skill" --tier express --account-id 0.0.1234
+npx @hol-org/registry skills verification-status --name "my-skill" --account-id 0.0.1234
+```
+
+Notes:
+- Verification requires skill ownership.
+- Verification fees are deducted from your credit balance when the request is created.
+- Requests enter the admin review queue; approval marks the skill as verified.
+
 ### Publish A Skill (End-to-End)
 
 1. Get an API key.
@@ -93,16 +136,16 @@ export REGISTRY_BROKER_API_KEY="your-key"
 npx @hol-org/registry skills init --dir ./my-skill --name "my-skill" --version "0.1.0" --description "My first skill."
 ```
 
-3. (Optional) Add more files (for example `logo.png`, `references/`, `scripts/`).
+3. (Optional) Add more files (for example `logo.png`, `references/`, `scripts/`, `assets/`).
    - If you have a project website, set `homepage` in `./my-skill/skill.json` (it will render as “Website” on the skill page).
 
-4. Edit `./my-skill/SKILL.md` so the instructions are clear and runnable.
+4. Edit `./my-skill/SKILL.md` and your manifest file (default `./my-skill/SKILL.manifest.json`) so instructions and manifest entries are complete.
 
-5. Validate against current broker limits:
+5. Lint against HCS-26 packaging rules and broker limits:
 
 ```bash
 npx @hol-org/registry skills config
-npx @hol-org/registry skills validate --dir ./my-skill
+npx @hol-org/registry skills lint --dir ./my-skill
 ```
 
 6. Quote, then publish (publishing is async):
