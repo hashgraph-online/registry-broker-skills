@@ -14,7 +14,7 @@ run_cli() {
   fi
 
   if command -v pnpm >/dev/null 2>&1; then
-    (cd "${SCRIPT_DIR}/.." && pnpm run build >/dev/null 2>&1 || true)
+    (cd "${SCRIPT_DIR}/.." && pnpm run build >/dev/null 2>&1)
   fi
 
   if [[ -f "$CLI_PATH" ]]; then
@@ -31,4 +31,10 @@ run_cli() {
   exit 1
 }
 
-run_cli stats
+run_stats() {
+  run_cli stats
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  run_stats
+fi
