@@ -63,9 +63,19 @@ jobs:
         run: |
           PACKAGE_DIR=".publish-package-${GITHUB_RUN_ID}"
           mkdir -p "${PACKAGE_DIR}/references" "${PACKAGE_DIR}/schemas"
-          cp SKILL.md skill.json apis.json llms.txt "${PACKAGE_DIR}/"
-          cp references/*.md "${PACKAGE_DIR}/references/"
-          cp schemas/skill.schema.json "${PACKAGE_DIR}/schemas/"
+          cp SKILL.md skill.json "${PACKAGE_DIR}/"
+          if [[ -f apis.json ]]; then
+            cp apis.json "${PACKAGE_DIR}/"
+          fi
+          if [[ -f llms.txt ]]; then
+            cp llms.txt "${PACKAGE_DIR}/"
+          fi
+          if compgen -G "references/*.md" >/dev/null; then
+            cp references/*.md "${PACKAGE_DIR}/references/"
+          fi
+          if [[ -f schemas/skill.schema.json ]]; then
+            cp schemas/skill.schema.json "${PACKAGE_DIR}/schemas/"
+          fi
           echo "dir=${PACKAGE_DIR}" >> "$GITHUB_OUTPUT"
       - name: Resolve version
         id: vars
