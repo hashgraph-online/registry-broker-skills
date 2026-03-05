@@ -9,11 +9,10 @@ on:
     paths:
       - SKILL.md
       - skill.json
+      - apis.json
+      - llms.txt
+      - schemas/**
       - references/**
-      - scripts/**
-      - examples/**
-      - src/**
-      - index.js
       - package.json
   workflow_dispatch:
     inputs:
@@ -30,33 +29,103 @@ jobs:
       issues: write
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install validation dependencies
+        run: npm install --no-save ajv@8 ajv-formats@3
+      - name: Validate skill manifest schema
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const Ajv2020 = require('ajv/dist/2020').default;
+          const addFormats = require('ajv-formats').default;
+
+          const schema = JSON.parse(fs.readFileSync('schemas/skill.schema.json', 'utf8'));
+          const manifest = JSON.parse(fs.readFileSync('skill.json', 'utf8'));
+
+          const ajv = new Ajv2020({ allErrors: true, strict: false });
+          addFormats(ajv);
+          const validate = ajv.compile(schema);
+          const ok = validate(manifest);
+
+          if (!ok) {
+            console.error(JSON.stringify(validate.errors, null, 2));
+            process.exit(1);
+          }
+
+          console.log('Schema validation passed for skill.json');
+          NODE
       - name: Prepare publish package
         id: package
         shell: bash
         run: |
           PACKAGE_DIR=".publish-package-${GITHUB_RUN_ID}"
-          mkdir -p "${PACKAGE_DIR}/bin" "${PACKAGE_DIR}/examples" "${PACKAGE_DIR}/references" "${PACKAGE_DIR}/scripts"
-          cp SKILL.md skill.json README.md LICENSE index.js package.json "${PACKAGE_DIR}/"
-          cp bin/cli.js "${PACKAGE_DIR}/bin/"
-          cp examples/*.js "${PACKAGE_DIR}/examples/"
+          mkdir -p "${PACKAGE_DIR}/references" "${PACKAGE_DIR}/schemas"
+          cp SKILL.md skill.json apis.json llms.txt "${PACKAGE_DIR}/"
           cp references/*.md "${PACKAGE_DIR}/references/"
-          cp scripts/*.sh "${PACKAGE_DIR}/scripts/"
+          cp schemas/skill.schema.json "${PACKAGE_DIR}/schemas/"
           echo "dir=${PACKAGE_DIR}" >> "$GITHUB_OUTPUT"
       - name: Resolve version
         id: vars
         shell: bash
         run: |
+          SKILL_NAME=$(node -e "const fs=require('node:fs'); const skill=JSON.parse(fs.readFileSync('skill.json','utf8')); const value=typeof skill.name==='string'?skill.name.trim():''; process.stdout.write(value);")
+          if [[ -z "$SKILL_NAME" ]]; then
+            echo "skill.json must include a non-empty name"
+            exit 1
+          fi
+
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          if [[ -z "$PACKAGE_VERSION" ]]; then
+            echo "package.json must include version"
+            exit 1
+          fi
+
           VERSION_INPUT="${{ github.event.inputs.version }}"
           if [[ "${{ github.event_name }}" == "release" && -z "$VERSION_INPUT" ]]; then
             VERSION_INPUT="${GITHUB_REF_NAME#v}"
           fi
-          if [[ -n "$VERSION_INPUT" ]]; then
-            echo "version=$VERSION_INPUT" >> "$GITHUB_OUTPUT"
+          if [[ -z "$VERSION_INPUT" ]]; then
+            VERSION_INPUT="$PACKAGE_VERSION"
           fi
-      - uses: hashgraph-online/skill-publish@v1
+
+          echo "name=$SKILL_NAME" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION_INPUT" >> "$GITHUB_OUTPUT"
+      - name: Checkout skill publish action
+        uses: actions/checkout@v4
         with:
-          api-key: ${{ secrets.RB_API_KEY }}
-          skill-dir: ${{ steps.package.outputs.dir }}
-          version: ${{ steps.vars.outputs.version }}
-          annotate: "true"
-          github-token: ${{ github.token }}
+          repository: hashgraph-online/skill-publish
+          ref: main
+          path: .skill-publish-action
+      - name: Patch skill publish action endpoint compatibility
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const file = '.skill-publish-action/entrypoint.mjs';
+          const content = fs.readFileSync(file, 'utf8');
+          if (!content.includes('/skills/list')) {
+            console.log('No /skills/list endpoint detected; no patch needed.');
+            process.exit(0);
+          }
+          const updated = content.replace('/skills/list', '/skills');
+          fs.writeFileSync(file, updated);
+          console.log('Patched skill-publish action to use /skills endpoint.');
+          NODE
+      - name: Publish skill package
+        shell: bash
+        env:
+          INPUT_API_BASE_URL: https://hol.org/registry/api/v1
+          INPUT_API_KEY: ${{ secrets.RB_API_KEY }}
+          INPUT_ACCOUNT_ID: ""
+          INPUT_SKILL_DIR: ${{ steps.package.outputs.dir }}
+          INPUT_NAME: ${{ steps.vars.outputs.name }}
+          INPUT_VERSION: ${{ steps.vars.outputs.version }}
+          INPUT_STAMP_REPO_COMMIT: "true"
+          INPUT_POLL_TIMEOUT_MS: "720000"
+          INPUT_POLL_INTERVAL_MS: "4000"
+          INPUT_ANNOTATE: "true"
+          INPUT_GITHUB_TOKEN: ${{ github.token }}
+        run: node .skill-publish-action/entrypoint.mjs
