@@ -4,16 +4,7 @@
 
 set -euo pipefail
 
-BASE_URL="${REGISTRY_BROKER_API_URL:-https://hol.org/registry/api/v1}"
-API_KEY="${REGISTRY_BROKER_API_KEY:-}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/stats.sh"
 
-if [[ -z "$API_KEY" ]]; then
-  echo "Error: REGISTRY_BROKER_API_KEY environment variable is required"
-  exit 1
-fi
-
-echo "Credit Balance"
-echo "=============="
-
-curl -s "${BASE_URL}/credits/balance" \
-  -H "x-api-key: $API_KEY" | jq .
+run_cli balance

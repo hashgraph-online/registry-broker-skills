@@ -6,7 +6,8 @@ set -euo pipefail
 
 QUERY="${1:-}"
 LIMIT="${2:-10}"
-BASE_URL="${REGISTRY_BROKER_API_URL:-https://hol.org/registry/api/v1}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/stats.sh"
 
 if [[ -z "$QUERY" ]]; then
   echo "Usage: $0 <query> [limit]"
@@ -14,10 +15,4 @@ if [[ -z "$QUERY" ]]; then
   exit 1
 fi
 
-# URL encode the query
-ENCODED_QUERY=$(printf '%s' "$QUERY" | jq -sRr @uri)
-
-echo "Searching for: $QUERY"
-echo "---"
-
-curl -s "${BASE_URL}/search?q=${ENCODED_QUERY}&limit=${LIMIT}" | jq '.hits[] | {uaid, name: (.name // .profile.display_name // .uaid), description: ((.description // .profile.bio // "")[0:100])}'
+run_cli search "$QUERY" "$LIMIT"

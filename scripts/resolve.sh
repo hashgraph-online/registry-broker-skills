@@ -5,7 +5,8 @@
 set -euo pipefail
 
 UAID="${1:-}"
-BASE_URL="${REGISTRY_BROKER_API_URL:-https://hol.org/registry/api/v1}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/stats.sh"
 
 if [[ -z "$UAID" ]]; then
   echo "Usage: $0 <uaid>"
@@ -13,7 +14,4 @@ if [[ -z "$UAID" ]]; then
   exit 1
 fi
 
-echo "Resolving: $UAID"
-echo "---"
-
-curl -s "${BASE_URL}/resolve/${UAID}" | jq .
+run_cli resolve "$UAID"
