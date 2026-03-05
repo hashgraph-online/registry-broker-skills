@@ -6,7 +6,32 @@ set -euo pipefail
 
 QUERY="${1:-}"
 LIMIT="${2:-10}"
-BASE_URL="${REGISTRY_BROKER_API_URL:-https://hol.org/registry/api/v1}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLI_PATH="${SCRIPT_DIR}/../bin/cli.js"
+
+run_cli() {
+  if [[ -f "$CLI_PATH" ]]; then
+    node "$CLI_PATH" "$@"
+    return
+  fi
+
+  if command -v pnpm >/dev/null 2>&1; then
+    (cd "${SCRIPT_DIR}/.." && pnpm run build >/dev/null 2>&1 || true)
+  fi
+
+  if [[ -f "$CLI_PATH" ]]; then
+    node "$CLI_PATH" "$@"
+    return
+  fi
+
+  if command -v hol-registry >/dev/null 2>&1; then
+    hol-registry "$@"
+    return
+  fi
+
+  echo "Error: CLI is not available. Install with 'npm i -g @hol-org/registry' or run 'pnpm run build'."
+  exit 1
+}
 
 if [[ -z "$QUERY" ]]; then
   echo "Usage: $0 <query> [limit]"
@@ -14,10 +39,4 @@ if [[ -z "$QUERY" ]]; then
   exit 1
 fi
 
-# URL encode the query
-ENCODED_QUERY=$(printf '%s' "$QUERY" | jq -sRr @uri)
-
-echo "Searching for: $QUERY"
-echo "---"
-
-curl -s "${BASE_URL}/search?q=${ENCODED_QUERY}&limit=${LIMIT}" | jq '.hits[] | {uaid, name: (.name // .profile.display_name // .uaid), description: ((.description // .profile.bio // "")[0:100])}'
+run_cli search "$QUERY" "$LIMIT"

@@ -6,8 +6,32 @@ set -euo pipefail
 
 UAID="${1:-}"
 MESSAGE="${2:-Hello!}"
-BASE_URL="${REGISTRY_BROKER_API_URL:-https://hol.org/registry/api/v1}"
-API_KEY="${REGISTRY_BROKER_API_KEY:-}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLI_PATH="${SCRIPT_DIR}/../bin/cli.js"
+
+run_cli() {
+  if [[ -f "$CLI_PATH" ]]; then
+    node "$CLI_PATH" "$@"
+    return
+  fi
+
+  if command -v pnpm >/dev/null 2>&1; then
+    (cd "${SCRIPT_DIR}/.." && pnpm run build >/dev/null 2>&1 || true)
+  fi
+
+  if [[ -f "$CLI_PATH" ]]; then
+    node "$CLI_PATH" "$@"
+    return
+  fi
+
+  if command -v hol-registry >/dev/null 2>&1; then
+    hol-registry "$@"
+    return
+  fi
+
+  echo "Error: CLI is not available. Install with 'npm i -g @hol-org/registry' or run 'pnpm run build'."
+  exit 1
+}
 
 if [[ -z "$UAID" ]]; then
   echo "Usage: $0 <uaid> [message]"
@@ -15,40 +39,4 @@ if [[ -z "$UAID" ]]; then
   exit 1
 fi
 
-if [[ -z "$API_KEY" ]]; then
-  echo "Error: REGISTRY_BROKER_API_KEY environment variable is required"
-  exit 1
-fi
-
-echo "Creating session with: $UAID"
-echo "---"
-
-# Create session
-SESSION_RESPONSE=$(
-  curl -s -X POST "${BASE_URL}/chat/session" \
-    -H "Content-Type: application/json" \
-    -H "x-api-key: $API_KEY" \
-    -d "{\"uaid\": \"$UAID\"}"
-)
-
-SESSION_ID=$(echo "$SESSION_RESPONSE" | jq -r '.sessionId')
-
-if [[ "$SESSION_ID" == "null" || -z "$SESSION_ID" ]]; then
-  echo "Failed to create session:"
-  echo "$SESSION_RESPONSE" | jq .
-  exit 1
-fi
-
-echo "Session created: $SESSION_ID"
-echo "Sending message: $MESSAGE"
-echo "---"
-
-# Send message
-curl -s -X POST "${BASE_URL}/chat/message" \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: $API_KEY" \
-  -d "{\"sessionId\": \"$SESSION_ID\", \"message\": \"$MESSAGE\"}" | jq .
-
-echo ""
-echo "Session ID: $SESSION_ID"
-echo "To continue chatting, use the session ID above"
+run_cli chat "$UAID" "$MESSAGE"

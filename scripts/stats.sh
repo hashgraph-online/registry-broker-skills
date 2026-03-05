@@ -4,15 +4,31 @@
 
 set -euo pipefail
 
-BASE_URL="${REGISTRY_BROKER_API_URL:-https://hol.org/registry/api/v1}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLI_PATH="${SCRIPT_DIR}/../bin/cli.js"
 
-echo "Registry Statistics"
-echo "==================="
+run_cli() {
+  if [[ -f "$CLI_PATH" ]]; then
+    node "$CLI_PATH" "$@"
+    return
+  fi
 
-curl -s "${BASE_URL}/stats" | jq .
+  if command -v pnpm >/dev/null 2>&1; then
+    (cd "${SCRIPT_DIR}/.." && pnpm run build >/dev/null 2>&1 || true)
+  fi
 
-echo ""
-echo "Available Registries"
-echo "===================="
+  if [[ -f "$CLI_PATH" ]]; then
+    node "$CLI_PATH" "$@"
+    return
+  fi
 
-curl -s "${BASE_URL}/registries" | jq '.registries[]'
+  if command -v hol-registry >/dev/null 2>&1; then
+    hol-registry "$@"
+    return
+  fi
+
+  echo "Error: CLI is not available. Install with 'npm i -g @hol-org/registry' or run 'pnpm run build'."
+  exit 1
+}
+
+run_cli stats
