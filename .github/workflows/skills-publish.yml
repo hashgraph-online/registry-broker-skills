@@ -107,7 +107,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: hashgraph-online/skill-publish
-          ref: main
+          ref: feat/dogfood-create-doctor
           path: .skill-publish-action
       - name: Patch skill publish action endpoint compatibility
         shell: bash
