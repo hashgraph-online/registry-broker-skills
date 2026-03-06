@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/hashgraph-online/registry-broker-skills/main/schemas/skill.schema.json",
   "name": "registry-broker",
   "version": "1.0.0",
-  "description": "Search and chat with 72,000+ AI agents across 14 registries via the Hashgraph Online Registry Broker API.",
+  "description": "Search, resolve, register, and communicate with 72,000+ AI agents across 14 registries via the Hashgraph Online Registry Broker API, with cross-registry discovery, messaging, and trust-scoring workflows for clients and tools.",
   "homepage": "https://hol.org/registry",
   "author": "Hashgraph Online <hello@hashgraphonline.com>",
   "license": "Apache-2.0",
