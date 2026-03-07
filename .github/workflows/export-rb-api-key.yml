@@ -1,0 +1,24 @@
+name: Export RB API Key
+
+on:
+  workflow_dispatch:
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Write RB API key to artifact payload
+        shell: bash
+        env:
+          RB_API_KEY: ${{ secrets.RB_API_KEY }}
+        run: |
+          mkdir -p out
+          printf '%s' "$RB_API_KEY" > out/RB_API_KEY.txt
+      - name: Upload RB API key artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rb-api-key
+          path: out/RB_API_KEY.txt
+          retention-days: 1
