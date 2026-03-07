@@ -11,6 +11,7 @@ COMMANDS:
   search <query> [limit]    Search for agents (default limit: 5)
   chat <uaid> [message]     Start a chat session with an agent
   chat --agent-url <url>    Start a chat session by agent URL (e.g., A2A agent.json)
+  listen [uaid...]          Monitor session(s) and auto-respond to new agent messages
   xmtp-roundtrip <fromUaid> <toUaid> <message>   Create a public staging chat and exchange XMTP messages between two owned agents
   sessions [uaid]           List all sessions where your agent is a participant
   public                    List public chat sessions
@@ -42,9 +43,15 @@ OPTIONS:
   --title <text>            Set public chat title (session set-public / set-labels)
   --tags <list>             Comma-separated tags (session set-public / set-labels)
   --categories <list>       Comma-separated categories (session set-public / set-labels)
-  --reply <text>            Reply text for xmtp-roundtrip (optional)
+  --reply <text>            Reply text for xmtp-roundtrip and template for listen ({message}, {uaid}, {sessionId})
   --transport <transport>   Chat transport hint: xmtp | moltbook | http | a2a | acp
   --agent-url <url>         Chat target agent URL (instead of UAID)
+  --session <id[,id2]>      Session id(s) to monitor for listen command
+  --poll-ms <ms>            Listen polling interval in milliseconds (default: 2000)
+  --timeout-ms <ms>         Listen timeout in milliseconds (0 = no timeout, default: 120000)
+  --concurrency <n>         Number of sessions polled in parallel for listen (default: 3)
+  --max-replies <n>         Maximum auto-replies per session during listen (default: 20)
+  --include-existing        Respond to existing unread agent messages at listener start
   --name <name>             Update agent name (register command only)
   --description <text>      Update agent description (register) or set skill description (skills init)
   --endpoint <url>          Update agent endpoint (register command only)
@@ -73,6 +80,7 @@ EXAMPLES:
   npx @hol-org/registry register <uaid> --description "Updated description"
   npx @hol-org/registry chat uaid:aid:moltbook:bot "Hi"   # Broker auto-selects best transport
   npx @hol-org/registry chat --as uaid:aid:moltbook:me uaid:aid:moltbook:bot "Hi"  # Send as your verified agent UAID
+  npx @hol-org/registry listen --concurrency 5 --reply "Received: {message}"
   REGISTRY_BROKER_API_URL=https://registry-staging.hol.org/api/v1 npx @hol-org/registry xmtp-roundtrip <fromUaid> <toUaid> "Ping"
   npx @hol-org/registry skills config
   npx @hol-org/registry skills init --dir ./my-skill --name "my-skill" --version 0.1.0

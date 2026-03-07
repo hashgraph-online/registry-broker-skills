@@ -1,13 +1,13 @@
 # HOL Registry
 
-| ![](https://github.com/hashgraph-online/standards-sdk/raw/main/Hashgraph-Online.png) | **AI agent skills for the Universal Agentic Registry.** Search 72,000+ AI agents, chat with any agent, register your own — consumable by Claude, Codex, Cursor, OpenClaw, and any AI coding assistant.<br><br>[Live Registry](https://hol.org/registry) &#124; [API Docs](https://hol.org/docs/registry-broker/) &#124; [SDK Docs](https://hol.org/docs/libraries/standards-sdk/) |
+| ![](https://github.com/hashgraph-online/standards-sdk/raw/main/Hashgraph-Online.png) | **AI agent skills for the Universal Agentic Registry.** Search live AI agent inventory, chat with any agent, register your own — consumable by Claude, Codex, Cursor, OpenClaw, and any AI coding assistant.<br><br>[Live Registry](https://hol.org/registry) &#124; [API Docs](https://hol.org/docs/registry-broker/) &#124; [SDK Docs](https://hol.org/docs/libraries/standards-sdk/) |
 | :-------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 
 [![npm version](https://img.shields.io/npm/v/@hol-org/registry?style=for-the-badge&logo=npm&logoColor=white&label=@hol-org/registry)](https://www.npmjs.com/package/@hol-org/registry)
 [![npm version](https://img.shields.io/npm/v/@hashgraphonline/standards-sdk?style=for-the-badge&logo=npm&logoColor=white&label=standards-sdk)](https://www.npmjs.com/package/@hashgraphonline/standards-sdk)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18748323.svg?style=for-the-badge)](https://doi.org/10.5281/zenodo.18748323)
 [![HOL Registry](https://img.shields.io/badge/HOL-Registry-5599FE?style=for-the-badge)](https://hol.org/registry)
-[![registry-broker on HOL Registry (Version + Verification)](https://img.shields.io/endpoint?url=https%3A%2F%2Fhol.org%2Fregistry%2Fapi%2Fv1%2Fskills%2Fbadge%3Fname%3Dregistry-broker%26metric%3Dversion%26style%3Dfor-the-badge%26label%3Dregistry-broker)](https://hol.org/registry/skills/registry-broker)
+[![HOL Registry skill badge](https://hol.org/registry/api/v1/skills/badge.svg?name=registry-broker&metric=version&style=for-the-badge&label=registry-broker)](https://hol.org/registry/skills/registry-broker)
 [![Run in Postman](https://img.shields.io/badge/Run_in-Postman-FF6C37?style=for-the-badge&logo=postman&logoColor=white)](https://app.getpostman.com/run-collection/51598040-f1ef77fd-ae05-4edb-8663-efa52b0d1e99?action=collection%2Ffork&source=rip_markdown&collection-url=entityId%3D51598040-f1ef77fd-ae05-4edb-8663-efa52b0d1e99%26entityType%3Dcollection%26workspaceId%3Dfb06c3a9-4aab-4418-8435-cf73197beb57)
 [![Import in Insomnia](https://img.shields.io/badge/Import_in-Insomnia-4000BF?style=for-the-badge&logo=insomnia&logoColor=white)](https://insomnia.rest/run/?label=Universal%20Agentic%20Registry&uri=https%3A%2F%2Fhol.org%2Fregistry%2Fapi%2Fv1%2Fopenapi.json)
 [![OpenAPI Spec](https://img.shields.io/badge/OpenAPI-3.1.0-6BA539?style=for-the-badge&logo=openapiinitiative&logoColor=white)](https://hol.org/registry/api/v1/openapi.json)
@@ -40,8 +40,10 @@ Use these snippets in your README, docs, or release notes to link canonical skil
 
 Direct references:
 - Skills index: `https://hol.org/registry/skills`
-- API docs: `https://hol.org/registry/docs`
+- Product docs: `https://hol.org/docs/registry-broker/`
+- Interactive API docs: `https://hol.org/registry/docs`
 - OpenAPI schema: `https://hol.org/registry/api/v1/openapi.json`
+- Live stats endpoint: `https://hol.org/registry/api/v1/dashboard/stats`
 - Skill publishing action: `https://github.com/hashgraph-online/skill-publish`
 
 ## Schema & Validation
@@ -49,6 +51,8 @@ Direct references:
 - Canonical manifest schema: [`schemas/skill.schema.json`](./schemas/skill.schema.json)
 - SchemaStore submission kit: [`references/SCHEMASTORE-SUBMISSION.md`](./references/SCHEMASTORE-SUBMISSION.md)
 - Syndication kit: [`references/SYNDICATION-KIT.md`](./references/SYNDICATION-KIT.md)
+- APIs metadata: [`apis.json`](./apis.json)
+- LLM index: [`llms.txt`](./llms.txt)
 
 ## DOI Readiness
 
@@ -57,7 +61,7 @@ Direct references:
 
 ## What is the Universal Registry?
 
-One standards-compliant API to access **72,000+ AI agents** from:
+One standards-compliant API to access live AI agent inventory from:
 
 | Protocol | Description |
 |----------|-------------|
@@ -253,10 +257,12 @@ export REGISTRY_BROKER_API_KEY="your-key"
 |----------|------|
 | **Live Registry** | [hol.org/registry](https://hol.org/registry) |
 | **API Documentation** | [hol.org/docs/registry-broker](https://hol.org/docs/registry-broker/) |
+| **Interactive API Docs** | [hol.org/registry/docs](https://hol.org/registry/docs) |
 | **SDK Documentation** | [hol.org/docs/libraries/standards-sdk](https://hol.org/docs/libraries/standards-sdk/) |
 | **Postman Collection** | [Run in Postman](https://app.getpostman.com/run-collection/51598040-f1ef77fd-ae05-4edb-8663-efa52b0d1e99) |
 | **Insomnia** | [Import OpenAPI](https://insomnia.rest/run/?label=Universal%20Agentic%20Registry&uri=https%3A%2F%2Fhol.org%2Fregistry%2Fapi%2Fv1%2Fopenapi.json) |
 | **OpenAPI Spec** | [openapi.json](https://hol.org/registry/api/v1/openapi.json) |
+| **Live Stats Endpoint** | [dashboard/stats](https://hol.org/registry/api/v1/dashboard/stats) |
 
 ## Related Repositories
 

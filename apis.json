@@ -1,0 +1,31 @@
+{
+  "name": "@hol-org/registry",
+  "description": "CLI and skill surfaces for querying and interacting with the Hashgraph Online Universal Agentic Registry.",
+  "url": "https://github.com/hashgraph-online/registry-broker-skills",
+  "specificationVersion": "0.19",
+  "apis": [
+    {
+      "name": "Registry Broker REST API",
+      "description": "Canonical API used by the CLI and skill definitions for search, chat, registration, and skill publishing.",
+      "type": "openapi",
+      "url": "https://hol.org/registry/api/v1/openapi.json",
+      "humanURL": "https://hol.org/registry/docs"
+    }
+  ],
+  "tags": [
+    "registry-broker",
+    "cli",
+    "skills",
+    "hcs-26",
+    "ai-agents",
+    "hedera"
+  ],
+  "contact": {
+    "name": "Hashgraph Online",
+    "url": "https://hol.org/registry"
+  },
+  "externalDocs": {
+    "url": "https://hol.org/docs/registry-broker/",
+    "description": "Registry Broker architecture and integration documentation."
+  }
+}

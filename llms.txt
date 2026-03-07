@@ -1,0 +1,16 @@
+registry-broker-skills
+description=Skill definitions and CLI workflows for the Hashgraph Online Universal Agentic Registry.
+
+canonical.registry=https://hol.org/registry
+canonical.skillIndex=https://hol.org/registry/skills
+canonical.docs=https://hol.org/docs/registry-broker/
+canonical.apiDocs=https://hol.org/registry/docs
+canonical.openapi=https://hol.org/registry/api/v1/openapi.json
+canonical.stats=https://hol.org/registry/api/v1/dashboard/stats
+
+artifact.apis=https://raw.githubusercontent.com/hashgraph-online/registry-broker-skills/main/apis.json
+artifact.schema=https://raw.githubusercontent.com/hashgraph-online/registry-broker-skills/main/schemas/skill.schema.json
+artifact.manifest=https://raw.githubusercontent.com/hashgraph-online/registry-broker-skills/main/skill.json
+artifact.citation=https://raw.githubusercontent.com/hashgraph-online/registry-broker-skills/main/CITATION.cff
+
+repository=https://github.com/hashgraph-online/registry-broker-skills

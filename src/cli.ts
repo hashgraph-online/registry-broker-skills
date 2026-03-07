@@ -9,6 +9,7 @@ import { KEY_FILE } from './paths';
 
 import { search } from './commands/search';
 import { chat } from './commands/chat';
+import { listenAndRespond } from './commands/listen';
 import { resolve } from './commands/resolve';
 import { stats } from './commands/stats';
 import { balance } from './commands/balance';
@@ -128,6 +129,66 @@ function parseChatOptions(argList: string[]) {
   };
 }
 
+function parsePositiveInteger(value: string, flag: string) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    console.error(`Error: ${flag} must be a positive number.`);
+    process.exit(1);
+  }
+  return Math.floor(parsed);
+}
+
+function parseNonNegativeInteger(value: string, flag: string) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    console.error(`Error: ${flag} must be a non-negative number.`);
+    process.exit(1);
+  }
+  return Math.floor(parsed);
+}
+
+function parseListenOptions(argList: string[]) {
+  let rest = [...argList];
+  const jsonMode = rest.includes('--json');
+  const includeExisting = rest.includes('--include-existing');
+  rest = rest.filter((arg) => arg !== '--json' && arg !== '--include-existing');
+
+  const parsedReply = parseArgValue(rest, '--reply');
+  rest = parsedReply.args;
+  const parsedPollMs = parseArgValue(rest, '--poll-ms');
+  rest = parsedPollMs.args;
+  const parsedTimeoutMs = parseArgValue(rest, '--timeout-ms');
+  rest = parsedTimeoutMs.args;
+  const parsedConcurrency = parseArgValue(rest, '--concurrency');
+  rest = parsedConcurrency.args;
+  const parsedMaxReplies = parseArgValue(rest, '--max-replies');
+  rest = parsedMaxReplies.args;
+
+  const pollMs = parsedPollMs.value
+    ? parsePositiveInteger(parsedPollMs.value, '--poll-ms')
+    : 2000;
+  const timeoutMs = parsedTimeoutMs.value
+    ? parseNonNegativeInteger(parsedTimeoutMs.value, '--timeout-ms')
+    : 120000;
+  const concurrency = parsedConcurrency.value
+    ? parsePositiveInteger(parsedConcurrency.value, '--concurrency')
+    : 3;
+  const maxReplies = parsedMaxReplies.value
+    ? parsePositiveInteger(parsedMaxReplies.value, '--max-replies')
+    : 20;
+
+  return {
+    json: jsonMode,
+    includeExisting,
+    replyTemplate: parsedReply.value,
+    pollMs,
+    timeoutMs,
+    concurrency,
+    maxReplies,
+    args: rest,
+  };
+}
+
 export async function main() {
   installConsoleStyling();
 
@@ -208,6 +269,41 @@ export async function main() {
           json: parsedOptions.json,
           transport: parsedOptions.transport,
           agentUrl: null,
+        });
+        break;
+      }
+
+      case 'listen': {
+        let rest = args.slice(1);
+        const parsedOptions = parseListenOptions(rest);
+        rest = parsedOptions.args;
+
+        const parsedSession = parseArgValue(rest, '--session');
+        rest = parsedSession.args;
+        const sessionIds = parsedSession.value
+          ? parsedSession.value
+              .split(',')
+              .map((value) => value.trim())
+              .filter(Boolean)
+          : [];
+
+        const parsedSender = parseSenderUaid(rest, null);
+        rest = parsedSender.args;
+        const senderUaid = parsedSender.senderUaid;
+
+        const uaids = rest
+          .map((value) => value.trim())
+          .filter((value) => value.length > 0);
+
+        await listenAndRespond(uaids, sessionIds, {
+          senderUaid,
+          replyTemplate: parsedOptions.replyTemplate,
+          pollMs: parsedOptions.pollMs,
+          timeoutMs: parsedOptions.timeoutMs,
+          concurrency: parsedOptions.concurrency,
+          includeExisting: parsedOptions.includeExisting,
+          maxRepliesPerSession: parsedOptions.maxReplies,
+          json: parsedOptions.json,
         });
         break;
       }

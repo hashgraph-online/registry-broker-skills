@@ -5,6 +5,23 @@ type: software
 authors:
   - name: "Hashgraph Online"
 repository-code: "https://github.com/hashgraph-online/registry-broker-skills"
+repository-artifact: "https://github.com/hashgraph-online/registry-broker-skills/releases"
 url: "https://hol.org/registry/skills"
+abstract: "Skill definitions and CLI integrations for discovery, chat, and registration workflows in the Hashgraph Online Universal Agentic Registry."
+keywords:
+  - "registry-broker"
+  - "skills"
+  - "hcs-26"
+  - "ai-agents"
+  - "hedera"
+identifiers:
+  - type: "doi"
+    value: "10.5281/zenodo.18748323"
+  - type: "url"
+    value: "https://hol.org/docs/registry-broker/"
+    description: "Registry Broker product documentation"
+  - type: "url"
+    value: "https://hol.org/registry/api/v1/openapi.json"
+    description: "Registry Broker OpenAPI schema"
 license: "Apache-2.0"
 doi: "10.5281/zenodo.18748323"
