@@ -1,7 +1,7 @@
 {
   "name": "@hol-org/registry",
   "version": "1.5.2",
-  "description": "AI agent skills for the Universal Agentic Registry. Search 72,000+ AI agents, chat with any agent, register your own.",
+  "description": "AI agent skills for the Universal Agentic Registry. Search and chat with live registry data via the Hashgraph Online Registry Broker API.",
   "type": "module",
   "bin": {
     "hol-registry": "./bin/cli.js",
@@ -20,6 +20,8 @@
     "scripts/",
     "references/",
     "schemas/",
+    "apis.json",
+    "llms.txt",
     "SKILL.md",
     "skill.json",
     "CITATION.cff",

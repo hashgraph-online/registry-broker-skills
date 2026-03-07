@@ -19,6 +19,21 @@ on:
       version:
         description: Optional skill version override
         required: false
+      publish-target:
+        description: Publish target
+        required: false
+        default: production
+        type: choice
+        options:
+          - production
+          - staging
+      api-base-url:
+        description: Optional broker API override
+        required: false
+      action-ref:
+        description: skill-publish Git ref override (branch, tag, or SHA)
+        required: false
+        default: main
 
 jobs:
   publish:
@@ -103,11 +118,43 @@ jobs:
 
           echo "name=$SKILL_NAME" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION_INPUT" >> "$GITHUB_OUTPUT"
+      - name: Resolve publish target
+        id: target
+        shell: bash
+        run: |
+          TARGET_INPUT="${{ github.event.inputs.publish-target }}"
+          if [[ -z "$TARGET_INPUT" ]]; then
+            TARGET_INPUT="production"
+          fi
+
+          API_BASE_URL_INPUT="${{ github.event.inputs.api-base-url }}"
+          if [[ -n "$API_BASE_URL_INPUT" ]]; then
+            API_BASE_URL="$API_BASE_URL_INPUT"
+          elif [[ "$TARGET_INPUT" == "staging" ]]; then
+            API_BASE_URL="https://registry-staging.hol.org/registry/api/v1"
+          else
+            API_BASE_URL="https://hol.org/registry/api/v1"
+          fi
+
+          ACTION_REF_INPUT="${{ github.event.inputs.action-ref }}"
+          if [[ -z "$ACTION_REF_INPUT" ]]; then
+            ACTION_REF_INPUT="main"
+          fi
+
+          SUBMIT_INDEXNOW="true"
+          if [[ "$TARGET_INPUT" == "staging" ]]; then
+            SUBMIT_INDEXNOW="false"
+          fi
+
+          echo "target=$TARGET_INPUT" >> "$GITHUB_OUTPUT"
+          echo "api_base_url=$API_BASE_URL" >> "$GITHUB_OUTPUT"
+          echo "action_ref=$ACTION_REF_INPUT" >> "$GITHUB_OUTPUT"
+          echo "submit_indexnow=$SUBMIT_INDEXNOW" >> "$GITHUB_OUTPUT"
       - name: Checkout skill publish action
         uses: actions/checkout@v4
         with:
           repository: hashgraph-online/skill-publish
-          ref: main
+          ref: ${{ steps.target.outputs.action_ref }}
           path: .skill-publish-action
       - name: Patch skill publish action endpoint compatibility
         shell: bash
@@ -124,10 +171,21 @@ jobs:
           fs.writeFileSync(file, updated);
           console.log('Patched skill-publish action to use /skills endpoint.');
           NODE
-      - name: Publish skill package
+      - name: Verify staging API key secret
+        if: steps.target.outputs.target == 'staging'
         shell: bash
         env:
-          INPUT_API_BASE_URL: https://hol.org/registry/api/v1
+          RB_API_KEY_STAGING: ${{ secrets.RB_API_KEY_STAGING }}
+        run: |
+          if [[ -z "$RB_API_KEY_STAGING" ]]; then
+            echo "RB_API_KEY_STAGING secret is required for staging publishes."
+            exit 1
+          fi
+      - name: Publish skill package (production)
+        if: steps.target.outputs.target != 'staging'
+        shell: bash
+        env:
+          INPUT_API_BASE_URL: ${{ steps.target.outputs.api_base_url }}
           INPUT_API_KEY: ${{ secrets.RB_API_KEY }}
           INPUT_ACCOUNT_ID: ""
           INPUT_SKILL_DIR: ${{ steps.package.outputs.dir }}
@@ -137,5 +195,23 @@ jobs:
           INPUT_POLL_TIMEOUT_MS: "720000"
           INPUT_POLL_INTERVAL_MS: "4000"
           INPUT_ANNOTATE: "true"
+          INPUT_SUBMIT_INDEXNOW: ${{ steps.target.outputs.submit_indexnow }}
+          INPUT_GITHUB_TOKEN: ${{ github.token }}
+        run: node .skill-publish-action/entrypoint.mjs
+      - name: Publish skill package (staging)
+        if: steps.target.outputs.target == 'staging'
+        shell: bash
+        env:
+          INPUT_API_BASE_URL: ${{ steps.target.outputs.api_base_url }}
+          INPUT_API_KEY: ${{ secrets.RB_API_KEY_STAGING }}
+          INPUT_ACCOUNT_ID: ""
+          INPUT_SKILL_DIR: ${{ steps.package.outputs.dir }}
+          INPUT_NAME: ${{ steps.vars.outputs.name }}
+          INPUT_VERSION: ${{ steps.vars.outputs.version }}
+          INPUT_STAMP_REPO_COMMIT: "true"
+          INPUT_POLL_TIMEOUT_MS: "720000"
+          INPUT_POLL_INTERVAL_MS: "4000"
+          INPUT_ANNOTATE: "true"
+          INPUT_SUBMIT_INDEXNOW: ${{ steps.target.outputs.submit_indexnow }}
           INPUT_GITHUB_TOKEN: ${{ github.token }}
         run: node .skill-publish-action/entrypoint.mjs
