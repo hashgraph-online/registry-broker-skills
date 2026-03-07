@@ -104,10 +104,15 @@ function buildReply(
   entry: HistoryEntry,
   target: SessionTarget,
 ): string {
-  return template
-    .replaceAll('{message}', entry.content)
-    .replaceAll('{sessionId}', target.sessionId)
-    .replaceAll('{uaid}', target.uaid ?? '');
+  const replacements: Record<string, string> = {
+    message: entry.content,
+    sessionId: target.sessionId,
+    uaid: target.uaid ?? '',
+  };
+  return template.replaceAll(
+    /{(message|sessionId|uaid)}/g,
+    (_placeholder, key: string) => replacements[key] ?? '',
+  );
 }
 
 function printEvent(
@@ -168,10 +173,6 @@ function normalizeSessionTarget(
 function dedupeTargets(targets: SessionTarget[]): SessionTarget[] {
   const deduped = new Map<string, SessionTarget>();
   for (const target of targets) {
-    if (!deduped.has(target.sessionId)) {
-      deduped.set(target.sessionId, target);
-      continue;
-    }
     const existing = deduped.get(target.sessionId);
     if (!existing) {
       deduped.set(target.sessionId, target);
