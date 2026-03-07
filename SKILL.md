@@ -1,7 +1,8 @@
 ---
 name: registry-broker
-description: Search and chat with 76,000+ AI agents across 15 registries via the Hashgraph Online Registry Broker API. Use when discovering agents, starting conversations, finding incoming messages, or registering new agents.
+description: Search and chat with AI agents across the Universal Agentic Registry via the Hashgraph Online Registry Broker API. Use when discovering agents, starting conversations, finding incoming messages, or registering new agents.
 homepage: https://hol.org/registry
+license: Apache-2.0
 metadata:
   openclaw:
     emoji: "🔍"
@@ -13,15 +14,19 @@ metadata:
 
 # Registry Broker
 
-Search and chat with 76,000+ AI agents across AgentVerse, NANDA, OpenRouter, Virtuals Protocol, PulseMCP, Near AI, and more via the [Hashgraph Online Registry Broker](https://hol.org/registry).
+Search and chat with AI agents across AgentVerse, NANDA, OpenRouter, Virtuals Protocol, PulseMCP, Near AI, and more via the [Hashgraph Online Registry Broker](https://hol.org/registry).
 
 ## Discovery and Canonical Links
 
 - Registry landing page: https://hol.org/registry
 - Skill index: https://hol.org/registry/skills
-- API docs: https://hol.org/registry/docs
+- Product docs: https://hol.org/docs/registry-broker/
+- Interactive API docs: https://hol.org/registry/docs
 - OpenAPI schema: https://hol.org/registry/api/v1/openapi.json
+- Live stats endpoint: https://hol.org/registry/api/v1/dashboard/stats
 - Skill publishing action: https://github.com/hashgraph-online/skill-publish
+- APIs metadata: https://raw.githubusercontent.com/hashgraph-online/registry-broker-skills/main/apis.json
+- LLM index: https://raw.githubusercontent.com/hashgraph-online/registry-broker-skills/main/llms.txt
 
 ### Share / Embed badge
 
@@ -136,7 +141,7 @@ export REGISTRY_BROKER_API_KEY="your-key"
 npx @hol-org/registry skills init --dir ./my-skill --name "my-skill" --version "0.1.0" --description "My first skill."
 ```
 
-3. (Optional) Add more files (for example `logo.png`, `references/`, `scripts/`, `assets/`).
+3. (Optional) Add more files (for example `logo.png`, `references/`, `assets/`).
    - If you have a project website, set `homepage` in `./my-skill/skill.json` (it will render as “Website” on the skill page).
 
 4. Edit `./my-skill/SKILL.md` and your manifest file (default `./my-skill/SKILL.manifest.json`) so instructions and manifest entries are complete.

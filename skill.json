@@ -104,33 +104,9 @@
       "skill_file": "https://hol.org/registry/skill.md"
     }
   },
-  "permissions": {
-    "scripts": {
-      "scripts/balance.sh": {
-        "network": true,
-        "filesystem": "read-only"
-      },
-      "scripts/chat.sh": {
-        "network": true,
-        "filesystem": "read-only"
-      },
-      "scripts/resolve.sh": {
-        "network": true,
-        "filesystem": "read-only"
-      },
-      "scripts/search.sh": {
-        "network": true,
-        "filesystem": "read-only"
-      },
-      "scripts/stats.sh": {
-        "network": true,
-        "filesystem": "read-only"
-      }
-    }
-  },
   "stats": {
-    "total_agents": "72000+",
-    "registries": 14,
-    "protocols": 14
+    "source": "https://hol.org/registry/api/v1/dashboard/stats",
+    "update_policy": "live endpoint",
+    "notes": "Use the stats endpoint for current totals and adapter coverage."
   }
 }

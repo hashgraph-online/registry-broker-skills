@@ -1,6 +1,6 @@
 {
   "title": "registry-broker-skills",
-  "description": "Skill definitions and CLI surfaces for Hashgraph Online Registry Broker discovery and chat workflows. Canonical product URLs: https://hol.org/registry, https://hol.org/registry/skills, https://hol.org/docs/registry-broker/.",
+  "description": "Skill definitions and CLI integrations for discovery, chat, and registration workflows in the Hashgraph Online Universal Agentic Registry.",
   "upload_type": "software",
   "access_right": "open",
   "license": "apache-2.0",
@@ -15,7 +15,9 @@
     "hedera",
     "mcp",
     "a2a",
-    "hcs-26"
+    "hcs-26",
+    "registry-broker",
+    "openapi"
   ],
   "related_identifiers": [
     {
@@ -34,8 +36,28 @@
       "scheme": "url"
     },
     {
+      "identifier": "https://hol.org/registry/docs",
+      "relation": "isDocumentedBy",
+      "scheme": "url"
+    },
+    {
       "identifier": "https://hol.org/registry/api/v1/openapi.json",
       "relation": "documents",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://raw.githubusercontent.com/hashgraph-online/registry-broker-skills/main/schemas/skill.schema.json",
+      "relation": "isDerivedFrom",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://raw.githubusercontent.com/hashgraph-online/registry-broker-skills/main/apis.json",
+      "relation": "hasPart",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://raw.githubusercontent.com/hashgraph-online/registry-broker-skills/main/llms.txt",
+      "relation": "hasPart",
       "scheme": "url"
     }
   ]
