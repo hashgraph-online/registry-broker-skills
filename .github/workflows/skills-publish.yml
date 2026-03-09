@@ -22,11 +22,16 @@ on:
       publish-target:
         description: Publish target
         required: false
-        default: production
+        default: staging
         type: choice
         options:
           - production
           - staging
+      allow-nonstable-production-version:
+        description: Allow publishing a non-stable custom version to production
+        required: false
+        default: false
+        type: boolean
       api-base-url:
         description: Optional broker API override
         required: false
@@ -191,6 +196,7 @@ jobs:
           INPUT_SKILL_DIR: ${{ steps.package.outputs.dir }}
           INPUT_NAME: ${{ steps.vars.outputs.name }}
           INPUT_VERSION: ${{ steps.vars.outputs.version }}
+          INPUT_ALLOW_NONSTABLE_PRODUCTION_VERSION: ${{ github.event.inputs.allow-nonstable-production-version }}
           INPUT_STAMP_REPO_COMMIT: "true"
           INPUT_POLL_TIMEOUT_MS: "720000"
           INPUT_POLL_INTERVAL_MS: "4000"
@@ -208,6 +214,7 @@ jobs:
           INPUT_SKILL_DIR: ${{ steps.package.outputs.dir }}
           INPUT_NAME: ${{ steps.vars.outputs.name }}
           INPUT_VERSION: ${{ steps.vars.outputs.version }}
+          INPUT_ALLOW_NONSTABLE_PRODUCTION_VERSION: ${{ github.event.inputs.allow-nonstable-production-version }}
           INPUT_STAMP_REPO_COMMIT: "true"
           INPUT_POLL_TIMEOUT_MS: "720000"
           INPUT_POLL_INTERVAL_MS: "4000"
