@@ -1,0 +1,53 @@
+name: Validate Skill
+
+on:
+  pull_request:
+    paths:
+      - 'SKILL.md'
+      - 'skill.json'
+      - 'apis.json'
+      - 'llms.txt'
+      - 'schemas/**'
+      - 'references/**'
+      - 'package.json'
+      - '.hol/skill-publish.yml'
+      - '.github/workflows/skills-publish.yml'
+      - '.github/workflows/validate-skill.yml'
+
+jobs:
+  validate:
+    concurrency:
+      group: validate-skill-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Prepare skill package
+        id: package
+        shell: bash
+        run: |
+          PACKAGE_DIR="publish-package-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          mkdir -p "${PACKAGE_DIR}/references" "${PACKAGE_DIR}/schemas"
+          cp SKILL.md skill.json "${PACKAGE_DIR}/"
+          if [[ -f apis.json ]]; then
+            cp apis.json "${PACKAGE_DIR}/"
+          fi
+          if [[ -f llms.txt ]]; then
+            cp llms.txt "${PACKAGE_DIR}/"
+          fi
+          if compgen -G "references/*.md" >/dev/null; then
+            cp references/*.md "${PACKAGE_DIR}/references/"
+          fi
+          if [[ -f schemas/skill.schema.json ]]; then
+            cp schemas/skill.schema.json "${PACKAGE_DIR}/schemas/"
+          fi
+          echo "dir=${PACKAGE_DIR}" >> "$GITHUB_OUTPUT"
+      - name: Validate skill package
+        uses: hashgraph-online/skill-publish@be25745bc45fe05617c033e840661a7f0576be81
+        with:
+          mode: validate
+          skill-dir: ${{ steps.package.outputs.dir }}
+          annotate: "false"
+          preview-upload: "false"

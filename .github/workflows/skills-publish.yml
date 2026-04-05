@@ -1,19 +1,8 @@
-name: Skills Publish
+name: Publish Skill
 
 on:
   release:
     types: [published]
-  push:
-    branches:
-      - main
-    paths:
-      - SKILL.md
-      - skill.json
-      - apis.json
-      - llms.txt
-      - schemas/**
-      - references/**
-      - package.json
   workflow_dispatch:
     inputs:
       version:
@@ -22,7 +11,7 @@ on:
       publish-target:
         description: Publish target
         required: false
-        default: staging
+        default: production
         type: choice
         options:
           - production
@@ -35,10 +24,6 @@ on:
       api-base-url:
         description: Optional broker API override
         required: false
-      action-ref:
-        description: skill-publish Git ref override (branch, tag, or SHA)
-        required: false
-        default: main
 
 jobs:
   publish:
@@ -47,41 +32,17 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
+    outputs:
+      publish-target: ${{ steps.config.outputs.publish_target }}
+      api-base-url: ${{ steps.config.outputs.api_base_url }}
+      submit-indexnow: ${{ steps.config.outputs.submit_indexnow }}
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Install validation dependencies
-        run: npm install --no-save ajv@8 ajv-formats@3
-      - name: Validate skill manifest schema
-        run: |
-          node <<'NODE'
-          const fs = require('node:fs');
-          const Ajv2020 = require('ajv/dist/2020').default;
-          const addFormats = require('ajv-formats').default;
-
-          const schema = JSON.parse(fs.readFileSync('schemas/skill.schema.json', 'utf8'));
-          const manifest = JSON.parse(fs.readFileSync('skill.json', 'utf8'));
-
-          const ajv = new Ajv2020({ allErrors: true, strict: false });
-          addFormats(ajv);
-          const validate = ajv.compile(schema);
-          const ok = validate(manifest);
-
-          if (!ok) {
-            console.error(JSON.stringify(validate.errors, null, 2));
-            process.exit(1);
-          }
-
-          console.log('Schema validation passed for skill.json');
-          NODE
-      - name: Prepare publish package
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Prepare skill package
         id: package
         shell: bash
         run: |
-          PACKAGE_DIR=".publish-package-${GITHUB_RUN_ID}"
+          PACKAGE_DIR="publish-package-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           mkdir -p "${PACKAGE_DIR}/references" "${PACKAGE_DIR}/schemas"
           cp SKILL.md skill.json "${PACKAGE_DIR}/"
           if [[ -f apis.json ]]; then
@@ -97,34 +58,8 @@ jobs:
             cp schemas/skill.schema.json "${PACKAGE_DIR}/schemas/"
           fi
           echo "dir=${PACKAGE_DIR}" >> "$GITHUB_OUTPUT"
-      - name: Resolve version
-        id: vars
-        shell: bash
-        run: |
-          SKILL_NAME=$(node -e "const fs=require('node:fs'); const skill=JSON.parse(fs.readFileSync('skill.json','utf8')); const value=typeof skill.name==='string'?skill.name.trim():''; process.stdout.write(value);")
-          if [[ -z "$SKILL_NAME" ]]; then
-            echo "skill.json must include a non-empty name"
-            exit 1
-          fi
-
-          PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          if [[ -z "$PACKAGE_VERSION" ]]; then
-            echo "package.json must include version"
-            exit 1
-          fi
-
-          VERSION_INPUT="${{ github.event.inputs.version }}"
-          if [[ "${{ github.event_name }}" == "release" && -z "$VERSION_INPUT" ]]; then
-            VERSION_INPUT="${GITHUB_REF_NAME#v}"
-          fi
-          if [[ -z "$VERSION_INPUT" ]]; then
-            VERSION_INPUT="$PACKAGE_VERSION"
-          fi
-
-          echo "name=$SKILL_NAME" >> "$GITHUB_OUTPUT"
-          echo "version=$VERSION_INPUT" >> "$GITHUB_OUTPUT"
-      - name: Resolve publish target
-        id: target
+      - name: Resolve publish configuration
+        id: config
         shell: bash
         run: |
           TARGET_INPUT="${{ github.event.inputs.publish-target }}"
@@ -141,84 +76,37 @@ jobs:
             API_BASE_URL="https://hol.org/registry/api/v1"
           fi
 
-          ACTION_REF_INPUT="${{ github.event.inputs.action-ref }}"
-          if [[ -z "$ACTION_REF_INPUT" ]]; then
-            ACTION_REF_INPUT="main"
-          fi
-
           SUBMIT_INDEXNOW="true"
           if [[ "$TARGET_INPUT" == "staging" ]]; then
             SUBMIT_INDEXNOW="false"
           fi
 
-          echo "target=$TARGET_INPUT" >> "$GITHUB_OUTPUT"
+          echo "publish_target=$TARGET_INPUT" >> "$GITHUB_OUTPUT"
           echo "api_base_url=$API_BASE_URL" >> "$GITHUB_OUTPUT"
-          echo "action_ref=$ACTION_REF_INPUT" >> "$GITHUB_OUTPUT"
           echo "submit_indexnow=$SUBMIT_INDEXNOW" >> "$GITHUB_OUTPUT"
-      - name: Checkout skill publish action
-        uses: actions/checkout@v4
+      - name: Publish skill package
+        if: steps.config.outputs.publish_target != 'staging'
+        uses: hashgraph-online/skill-publish@be25745bc45fe05617c033e840661a7f0576be81
         with:
-          repository: hashgraph-online/skill-publish
-          ref: ${{ steps.target.outputs.action_ref }}
-          path: .skill-publish-action
-      - name: Patch skill publish action endpoint compatibility
-        shell: bash
-        run: |
-          node <<'NODE'
-          const fs = require('node:fs');
-          const file = '.skill-publish-action/entrypoint.mjs';
-          const content = fs.readFileSync(file, 'utf8');
-          if (!content.includes('/skills/list')) {
-            console.log('No /skills/list endpoint detected; no patch needed.');
-            process.exit(0);
-          }
-          const updated = content.replace('/skills/list', '/skills');
-          fs.writeFileSync(file, updated);
-          console.log('Patched skill-publish action to use /skills endpoint.');
-          NODE
-      - name: Verify staging API key secret
-        if: steps.target.outputs.target == 'staging'
-        shell: bash
-        env:
-          RB_API_KEY_STAGING: ${{ secrets.RB_API_KEY_STAGING }}
-        run: |
-          if [[ -z "$RB_API_KEY_STAGING" ]]; then
-            echo "RB_API_KEY_STAGING secret is required for staging publishes."
-            exit 1
-          fi
-      - name: Publish skill package (production)
-        if: steps.target.outputs.target != 'staging'
-        shell: bash
-        env:
-          INPUT_API_BASE_URL: ${{ steps.target.outputs.api_base_url }}
-          INPUT_API_KEY: ${{ secrets.RB_API_KEY }}
-          INPUT_ACCOUNT_ID: ""
-          INPUT_SKILL_DIR: ${{ steps.package.outputs.dir }}
-          INPUT_NAME: ${{ steps.vars.outputs.name }}
-          INPUT_VERSION: ${{ steps.vars.outputs.version }}
-          INPUT_ALLOW_NONSTABLE_PRODUCTION_VERSION: ${{ github.event.inputs.allow-nonstable-production-version }}
-          INPUT_STAMP_REPO_COMMIT: "true"
-          INPUT_POLL_TIMEOUT_MS: "720000"
-          INPUT_POLL_INTERVAL_MS: "4000"
-          INPUT_ANNOTATE: "true"
-          INPUT_SUBMIT_INDEXNOW: ${{ steps.target.outputs.submit_indexnow }}
-          INPUT_GITHUB_TOKEN: ${{ github.token }}
-        run: node .skill-publish-action/entrypoint.mjs
+          mode: publish
+          api-key: ${{ secrets.RB_API_KEY }}
+          api-base-url: ${{ steps.config.outputs.api_base_url }}
+          version: ${{ github.event.inputs.version }}
+          skill-dir: ${{ steps.package.outputs.dir }}
+          annotate: "true"
+          submit-indexnow: ${{ steps.config.outputs.submit_indexnow }}
+          allow-nonstable-production-version: ${{ github.event.inputs.allow-nonstable-production-version }}
+          github-token: ${{ github.token }}
       - name: Publish skill package (staging)
-        if: steps.target.outputs.target == 'staging'
-        shell: bash
-        env:
-          INPUT_API_BASE_URL: ${{ steps.target.outputs.api_base_url }}
-          INPUT_API_KEY: ${{ secrets.RB_API_KEY_STAGING }}
-          INPUT_ACCOUNT_ID: ""
-          INPUT_SKILL_DIR: ${{ steps.package.outputs.dir }}
-          INPUT_NAME: ${{ steps.vars.outputs.name }}
-          INPUT_VERSION: ${{ steps.vars.outputs.version }}
-          INPUT_ALLOW_NONSTABLE_PRODUCTION_VERSION: ${{ github.event.inputs.allow-nonstable-production-version }}
-          INPUT_STAMP_REPO_COMMIT: "true"
-          INPUT_POLL_TIMEOUT_MS: "720000"
-          INPUT_POLL_INTERVAL_MS: "4000"
-          INPUT_ANNOTATE: "true"
-          INPUT_SUBMIT_INDEXNOW: ${{ steps.target.outputs.submit_indexnow }}
-          INPUT_GITHUB_TOKEN: ${{ github.token }}
-        run: node .skill-publish-action/entrypoint.mjs
+        if: steps.config.outputs.publish_target == 'staging'
+        uses: hashgraph-online/skill-publish@be25745bc45fe05617c033e840661a7f0576be81
+        with:
+          mode: publish
+          api-key: ${{ secrets.RB_API_KEY_STAGING }}
+          api-base-url: ${{ steps.config.outputs.api_base_url }}
+          version: ${{ github.event.inputs.version }}
+          skill-dir: ${{ steps.package.outputs.dir }}
+          annotate: "true"
+          submit-indexnow: ${{ steps.config.outputs.submit_indexnow }}
+          allow-nonstable-production-version: ${{ github.event.inputs.allow-nonstable-production-version }}
+          github-token: ${{ github.token }}
