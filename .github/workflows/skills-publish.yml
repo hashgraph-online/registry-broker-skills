@@ -36,6 +36,7 @@ jobs:
       publish-target: ${{ steps.config.outputs.publish_target }}
       api-base-url: ${{ steps.config.outputs.api_base_url }}
       submit-indexnow: ${{ steps.config.outputs.submit_indexnow }}
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Prepare skill package
@@ -84,6 +85,21 @@ jobs:
           echo "publish_target=$TARGET_INPUT" >> "$GITHUB_OUTPUT"
           echo "api_base_url=$API_BASE_URL" >> "$GITHUB_OUTPUT"
           echo "submit_indexnow=$SUBMIT_INDEXNOW" >> "$GITHUB_OUTPUT"
+      - name: Resolve publish version
+        id: version
+        shell: bash
+        run: |
+          VERSION_INPUT="${{ github.event.inputs.version }}"
+          if [[ -n "$VERSION_INPUT" ]]; then
+            RESOLVED_VERSION="$VERSION_INPUT"
+          elif [[ -n "${{ github.event.release.tag_name }}" ]]; then
+            RESOLVED_VERSION="${{ github.event.release.tag_name }}"
+            RESOLVED_VERSION="${RESOLVED_VERSION#v}"
+          else
+            RESOLVED_VERSION="$(node -p "require('./package.json').version")"
+          fi
+
+          echo "version=$RESOLVED_VERSION" >> "$GITHUB_OUTPUT"
       - name: Publish skill package
         if: steps.config.outputs.publish_target != 'staging'
         uses: hashgraph-online/skill-publish@be25745bc45fe05617c033e840661a7f0576be81
@@ -91,7 +107,7 @@ jobs:
           mode: publish
           api-key: ${{ secrets.RB_API_KEY }}
           api-base-url: ${{ steps.config.outputs.api_base_url }}
-          version: ${{ github.event.inputs.version }}
+          version: ${{ steps.version.outputs.version }}
           skill-dir: ${{ steps.package.outputs.dir }}
           annotate: "true"
           submit-indexnow: ${{ steps.config.outputs.submit_indexnow }}
@@ -104,7 +120,7 @@ jobs:
           mode: publish
           api-key: ${{ secrets.RB_API_KEY_STAGING }}
           api-base-url: ${{ steps.config.outputs.api_base_url }}
-          version: ${{ github.event.inputs.version }}
+          version: ${{ steps.version.outputs.version }}
           skill-dir: ${{ steps.package.outputs.dir }}
           annotate: "true"
           submit-indexnow: ${{ steps.config.outputs.submit_indexnow }}
