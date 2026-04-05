@@ -10,7 +10,6 @@ on:
       - 'schemas/**'
       - 'references/**'
       - 'package.json'
-      - '.hol/skill-publish.yml'
       - '.github/workflows/skills-publish.yml'
       - '.github/workflows/validate-skill.yml'
 
