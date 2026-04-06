@@ -29,7 +29,10 @@ jobs:
         run: |
           PACKAGE_DIR="publish-package-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           mkdir -p "${PACKAGE_DIR}/references" "${PACKAGE_DIR}/schemas"
-          cp SKILL.md skill.json "${PACKAGE_DIR}/"
+          cp SKILL.md "${PACKAGE_DIR}/"
+          if [[ -f skill.json ]]; then
+            cp skill.json "${PACKAGE_DIR}/"
+          fi
           if [[ -f apis.json ]]; then
             cp apis.json "${PACKAGE_DIR}/"
           fi
@@ -44,7 +47,7 @@ jobs:
           fi
           echo "dir=${PACKAGE_DIR}" >> "$GITHUB_OUTPUT"
       - name: Validate skill package
-        uses: hashgraph-online/skill-publish@be25745bc45fe05617c033e840661a7f0576be81
+        uses: hashgraph-online/skill-publish@5bd15487206db33996042021fcc54549b3ba90a7
         with:
           mode: validate
           skill-dir: ${{ steps.package.outputs.dir }}
