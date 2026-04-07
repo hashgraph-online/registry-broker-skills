@@ -105,7 +105,7 @@ jobs:
           echo "version=$RESOLVED_VERSION" >> "$GITHUB_OUTPUT"
       - name: Publish skill package
         if: steps.config.outputs.publish_target != 'staging'
-        uses: hashgraph-online/skill-publish@5bd15487206db33996042021fcc54549b3ba90a7
+        uses: hashgraph-online/skill-publish@47895cf40f6214511c713628dbbafd0c3316f4dd
         with:
           mode: publish
           api-key: ${{ secrets.RB_API_KEY }}
@@ -118,7 +118,7 @@ jobs:
           github-token: ${{ github.token }}
       - name: Publish skill package (staging)
         if: steps.config.outputs.publish_target == 'staging'
-        uses: hashgraph-online/skill-publish@5bd15487206db33996042021fcc54549b3ba90a7
+        uses: hashgraph-online/skill-publish@47895cf40f6214511c713628dbbafd0c3316f4dd
         with:
           mode: publish
           api-key: ${{ secrets.RB_API_KEY_STAGING }}
