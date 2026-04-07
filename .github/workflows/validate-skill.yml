@@ -49,7 +49,7 @@ jobs:
           fi
           echo "dir=${PACKAGE_DIR}" >> "$GITHUB_OUTPUT"
       - name: Validate skill package
-        uses: hashgraph-online/skill-publish@9c3c7efa79d19d3cc60a867f4763bf61bb983abf
+        uses: hashgraph-online/skill-publish@913e1ae8cb08abdbbba5905391ae3af7c7d64596
         with:
           mode: validate
           skill-dir: ${{ steps.package.outputs.dir }}
