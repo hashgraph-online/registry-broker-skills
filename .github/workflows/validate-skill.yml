@@ -21,6 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      issues: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Prepare skill package
@@ -47,9 +49,12 @@ jobs:
           fi
           echo "dir=${PACKAGE_DIR}" >> "$GITHUB_OUTPUT"
       - name: Validate skill package
-        uses: hashgraph-online/skill-publish@47895cf40f6214511c713628dbbafd0c3316f4dd
+        uses: hashgraph-online/skill-publish@165c47ad898756ed8b63a20262d2ae9de315e1d6
         with:
           mode: validate
           skill-dir: ${{ steps.package.outputs.dir }}
           annotate: "false"
           preview-upload: "false"
+          github-token: ${{ github.token }}
+          comment-mode: "state-changes"
+          comment-on-success: "true"
