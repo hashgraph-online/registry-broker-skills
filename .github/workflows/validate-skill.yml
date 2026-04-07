@@ -56,5 +56,5 @@ jobs:
           annotate: "false"
           preview-upload: "false"
           github-token: ${{ github.token }}
-          comment-mode: "state-changes"
+          comment-mode: "always"
           comment-on-success: "true"
