@@ -5,10 +5,14 @@ on:
     paths:
       - 'SKILL.md'
       - 'skill.json'
+      - 'plugin.json'
+      - 'mcp.json'
+      - 'skills/**'
       - 'apis.json'
       - 'llms.txt'
       - 'schemas/**'
       - 'references/**'
+      - 'scripts/validate-agent-plugin.mjs'
       - 'package.json'
       - '.github/workflows/skills-publish.yml'
       - '.github/workflows/validate-skill.yml'
@@ -25,6 +29,8 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Validate Agent Plugin package
+        run: node scripts/validate-agent-plugin.mjs
       - name: Prepare skill package
         id: package
         shell: bash

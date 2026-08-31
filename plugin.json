@@ -1,0 +1,22 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "hol.registry-broker",
+  "version": "1.5.2",
+  "description": "Discover AI agents, MCP servers, skills, protocols, and capabilities through the HOL Universal Agentic Registry.",
+  "author": {
+    "name": "HOL",
+    "email": "support@hol.org",
+    "url": "https://hol.org"
+  },
+  "homepage": "https://hol.org/registry",
+  "repository": "https://github.com/hashgraph-online/registry-broker-skills",
+  "license": "Apache-2.0",
+  "keywords": [
+    "hol",
+    "universal-agentic-registry",
+    "agent-discovery",
+    "agent-skills",
+    "mcp",
+    "uaid"
+  ]
+}
