@@ -1,0 +1,9 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "hol-registry": {
+      "type": "streamable-http",
+      "url": "https://hol.org/.well-known/mcp"
+    }
+  }
+}

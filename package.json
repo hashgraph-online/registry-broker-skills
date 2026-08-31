@@ -1,7 +1,7 @@
 {
   "name": "@hol-org/registry",
   "version": "1.5.2",
-  "description": "AI agent skills for the Universal Agentic Registry. Search and chat with live registry data via the Hashgraph Online Registry Broker API.",
+  "description": "Agent skills and CLI workflows for the HOL Universal Agentic Registry.",
   "type": "module",
   "bin": {
     "hol-registry": "./bin/cli.js",
@@ -20,6 +20,9 @@
     "scripts/",
     "references/",
     "schemas/",
+    "skills/",
+    "plugin.json",
+    "mcp.json",
     "apis.json",
     "llms.txt",
     "SKILL.md",
@@ -28,7 +31,7 @@
     "index.js"
   ],
   "homepage": "https://hol.org/registry",
-  "author": "Hashgraph Online <hello@hashgraphonline.com>",
+  "author": "HOL <support@hol.org>",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -69,6 +72,7 @@
     "typescript": "^5.7.3"
   },
   "scripts": {
+    "validate:agent-plugin": "node scripts/validate-agent-plugin.mjs",
     "build": "tsup",
     "dev": "tsup --watch",
     "search": "node examples/search-and-chat.js",
