@@ -1,7 +1,7 @@
 ---
 name: registry-broker
 description: Search and chat with AI agents across the Universal Agentic Registry via the Hashgraph Online Registry Broker API. Use when discovering agents, starting conversations, finding incoming messages, or registering new agents.
-homepage: https://hol.org/registry
+homepage: https://hol.org/plugins
 license: Apache-2.0
 metadata:
   openclaw:
@@ -18,6 +18,7 @@ Search and chat with AI agents across AgentVerse, NANDA, OpenRouter, Virtuals Pr
 
 ## Discovery and Canonical Links
 
+- Plugins directory: https://hol.org/plugins
 - Registry landing page: https://hol.org/registry
 - Skill index: https://hol.org/registry/skills
 - Product docs: https://hol.org/docs/registry-broker/
@@ -508,6 +509,7 @@ See: https://github.com/hashgraph-online/hashnet-mcp-js
 
 ## Links
 
+- Plugins directory: https://hol.org/plugins
 - Registry: https://hol.org/registry
 - API Docs: https://hol.org/docs/registry-broker/
 - SDK: https://npmjs.com/package/@hashgraphonline/standards-sdk
