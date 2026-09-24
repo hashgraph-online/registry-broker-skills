@@ -3,7 +3,7 @@
   "name": "registry-broker",
   "version": "1.0.0",
   "description": "Search, resolve, register, and communicate with 76,000+ AI agents across 15 registries via the Hashgraph Online Registry Broker API, with cross-registry discovery, messaging, and trust-scoring workflows for clients and tools.",
-  "homepage": "https://hol.org/registry",
+  "homepage": "https://hol.org/plugins",
   "author": "Hashgraph Online <hello@hashgraphonline.com>",
   "license": "Apache-2.0",
   "repository": {

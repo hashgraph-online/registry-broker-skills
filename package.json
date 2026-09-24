@@ -27,7 +27,7 @@
     "CITATION.cff",
     "index.js"
   ],
-  "homepage": "https://hol.org/registry",
+  "homepage": "https://hol.org/plugins",
   "author": "Hashgraph Online <hello@hashgraphonline.com>",
   "license": "Apache-2.0",
   "repository": {
